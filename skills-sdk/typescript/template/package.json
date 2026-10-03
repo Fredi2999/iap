@@ -1,0 +1,12 @@
+{
+  "name": "portable-ai-skill-template",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AssemblyScript-Vorlage für einen PortableAI-WASM-Skill.",
+  "scripts": {
+    "build": "asc assembly/index.ts --target release -o build/skill_template.wasm --optimizeLevel 3 --shrinkLevel 2 --exportRuntime"
+  },
+  "devDependencies": {
+    "assemblyscript": "^0.27.0"
+  }
+}

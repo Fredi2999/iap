@@ -1,0 +1,23 @@
+[package]
+name = "pa-skills"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+hex.workspace = true
+# Sandbox für Skills (Konzept 8.2): echte Ausführung statt nur Trockenlauf.
+# Bewusst nur Compiler und Laufzeit, ohne WASI, Komponentenmodell, Cache und
+# Profiling: Skills bekommen keine Importe, und das Bundle bleibt klein.
+wasmtime = { version = "49.0.1", default-features = false, features = ["cranelift", "runtime", "std"] }
+
+[dev-dependencies]
+# Nur für Tests: Test-Skills als lesbaren WAT-Text schreiben.
+wasmtime = { version = "49.0.1", default-features = false, features = ["cranelift", "runtime", "std", "wat"] }

@@ -1,0 +1,5 @@
+# Dateien, deren Größe oder SHA-256 ein Test oder Manifest prüft, behalten auf jedem System LF.
+# Ohne diese Zeile macht Git unter Windows daraus CRLF (Größe 12 statt 11 Bytes), und der Test
+# verifies_the_static_fixture scheitert dort.
+crates/pa-launcher/tests/fixtures/** text eol=lf
+THIRD-PARTY-NOTICES.md text eol=lf

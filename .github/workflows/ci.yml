@@ -1,0 +1,101 @@
+# Prüft jede Änderung wie die README es beschreibt. Windows ist der Hauptlauf, weil IAP dort
+# läuft (WinHTTP, Audio, Fenster); die Linux-Läufe prüfen nur Darstellung und Lizenzen.
+# Nichts in diesem Workflow lädt Modelle oder greift auf Geheimnisse zu.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  windows:
+    name: Windows (fmt, clippy, Tests, Frontend)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # check-clean-repo prüft auch den Verlauf
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> target
+            app/src-tauri -> target
+      - name: Rust-Komponenten
+        run: rustup component add clippy rustfmt
+      - name: Workspace
+        run: |
+          cargo fmt --all --check
+          cargo clippy --workspace --all-targets --locked -- -D warnings
+          cargo test --workspace --locked
+      # Das Frontend muss vor der Tauri-App gebaut sein: tauri::generate_context! liest ../dist
+      # schon beim Kompilieren (clippy und Tests der App brauchen app/dist).
+      - name: Frontend
+        working-directory: app
+        run: |
+          npm ci
+          npm run check
+          node scripts/i18n-keys.mjs --missing
+          node --experimental-strip-types --test scripts/calendar.test.ts scripts/calendarItems.test.ts scripts/contrast.test.ts scripts/graphLayout.test.ts scripts/themeColors.test.ts scripts/errors.test.ts
+          npm run build
+      - name: App (Tauri)
+        working-directory: app/src-tauri
+        run: |
+          cargo fmt --all --check
+          cargo clippy --all-targets --locked -- -D warnings
+          cargo test --locked
+      - name: Drittanbieter-Hinweise aktuell
+        run: node app/scripts/gen-third-party-notices.mjs --check
+      - name: Repository sauber (keine Tresore, Schlüssel, persönlichen Pfade)
+        run: node app/scripts/check-clean-repo.mjs
+
+  screenshots:
+    name: Oberfläche (Mock-Screenshots)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - name: Abhängigkeiten und Browser
+        working-directory: app
+        run: |
+          npm ci
+          npx playwright-core install --with-deps chromium
+      - name: Screenshots erzeugen
+        working-directory: app
+        run: node scripts/screenshots.mjs "$GITHUB_WORKSPACE/screenshots"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots/
+          if-no-files-found: error
+
+  licenses:
+    name: Lizenzen und bekannte Sicherheitslücken
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: Cargo.toml
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          manifest-path: app/src-tauri/Cargo.toml

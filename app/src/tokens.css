@@ -1,0 +1,189 @@
+/*
+ * IAP Design-Tokens (Phase A).
+ * Eine Quelle für Flächen, Linien, Text, Radien und Schrift in Dunkel und Hell.
+ * Die Tailwind-Paletten zinc/white/black werden hier auf dieselben Werte umgebogen,
+ * damit bestehende Utility-Klassen automatisch im blaugrauen Schema bleiben und
+ * im hellen Schema lesbar werden, ohne jede Seite einzeln umzuschreiben.
+ * Bewusste Akzente (lila Maximal-Zustand, Warn- und Fehlerfarben) bleiben eigenständig.
+ */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --v-tint: 226 241 250;          /* Grundton für transparente Überlagerungen */
+  --v-shade: 0 6 12;              /* Grundton für Schatten und Abdunklungen */
+  --v-canvas: #08121a;
+  --v-canvas-glow-1: rgba(62, 105, 135, .37);
+  --v-canvas-glow-2: rgba(30, 66, 88, .29);
+  --v-canvas-base: linear-gradient(145deg, #080f15 0%, #0b151c 45%, #070d12 100%);
+  --v-surface-1: rgba(23, 38, 48, .62);   /* Modulrahmen */
+  --v-surface-2: rgba(27, 43, 53, .6);    /* Karten */
+  --v-surface-3: rgba(40, 60, 74, .72);   /* angehobene Flächen, Hover */
+  --v-surface-solid: #172a36;             /* Popover, Dialoge */
+  --v-surface-input: #13222c;
+  --v-line: rgba(230, 244, 252, .14);
+  --v-line-strong: rgba(230, 244, 252, .28);
+  --v-text-primary: #eef6fa;
+  --v-text-secondary: #c6d4dc;
+  --v-text-muted: #a3b5c1;
+  --v-text-disabled: #71868f;
+  --v-accent-blue: #6cc4ee;
+  --v-accent-blue-soft: rgba(108, 196, 238, .16);
+  --v-cta-bg: #dcebf3;
+  --v-cta-bg-hover: #eef6fa;
+  --v-cta-text: #10212c;
+  --v-focus-ring: #cfe8f5;
+  --v-danger: #f08a8a;
+  --v-danger-soft: rgba(200, 60, 60, .14);
+  --v-warning: #e8c27a;
+  --v-success: #86d3a4;
+
+  /* Tailwind-Paletten auf das blaugraue Schema umbiegen. */
+  --color-zinc-50: #f3f8fb;
+  --color-zinc-100: #e6eef3;
+  --color-zinc-200: #d2dee5;
+  --color-zinc-300: #b8c9d3;
+  --color-zinc-400: #a3b5c1;
+  --color-zinc-500: #8ea3b0;
+  --color-zinc-600: #647b8a;
+  --color-zinc-700: #3f5462;
+  --color-zinc-800: #263a46;
+  --color-zinc-900: #172833;
+  --color-zinc-950: #0d1a22;
+  --color-white: #f4f9fc;
+  --color-black: #050b10;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --v-tint: 16 40 54;
+  --v-shade: 40 70 90;
+  --v-canvas: #eaf1f5;
+  --v-canvas-glow-1: rgba(120, 175, 210, .35);
+  --v-canvas-glow-2: rgba(150, 195, 220, .3);
+  --v-canvas-base: linear-gradient(145deg, #f2f6f9 0%, #e7eff4 50%, #eef4f7 100%);
+  --v-surface-1: rgba(255, 255, 255, .7);
+  --v-surface-2: rgba(255, 255, 255, .82);
+  --v-surface-3: rgba(226, 236, 242, .95);
+  --v-surface-solid: #ffffff;
+  --v-surface-input: #f6f9fb;
+  --v-line: rgba(16, 40, 54, .13);
+  --v-line-strong: rgba(16, 40, 54, .26);
+  --v-text-primary: #0f1d26;
+  --v-text-secondary: #2b4151;
+  --v-text-muted: #4a6272;
+  --v-text-disabled: #7d919e;
+  --v-accent-blue: #1d78aa;
+  --v-accent-blue-soft: rgba(29, 120, 170, .12);
+  --v-cta-bg: #173344;
+  --v-cta-bg-hover: #0f2633;
+  --v-cta-text: #f4f9fc;
+  --v-focus-ring: #1d78aa;
+  --v-danger: #b42f2f;
+  --v-danger-soft: rgba(200, 60, 60, .1);
+  --v-warning: #8a5a00;
+  --v-success: #1f7a45;
+
+  --color-zinc-50: #0f1d26;
+  --color-zinc-100: #172a36;
+  --color-zinc-200: #223847;
+  --color-zinc-300: #324c5c;
+  --color-zinc-400: #4a6272;
+  --color-zinc-500: #56707f;
+  --color-zinc-600: #7d919e;
+  --color-zinc-700: #b3c3cd;
+  --color-zinc-800: #d5e0e7;
+  --color-zinc-900: #e8eff3;
+  --color-zinc-950: #f4f8fa;
+  --color-white: #0f1d26;
+  --color-black: #ffffff;
+}
+
+/* Ohne ausdrückliche Wahl folgt IAP dem System. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme]) {
+    color-scheme: light;
+    --v-tint: 16 40 54;
+    --v-shade: 40 70 90;
+    --v-canvas: #eaf1f5;
+    --v-canvas-glow-1: rgba(120, 175, 210, .35);
+    --v-canvas-glow-2: rgba(150, 195, 220, .3);
+    --v-canvas-base: linear-gradient(145deg, #f2f6f9 0%, #e7eff4 50%, #eef4f7 100%);
+    --v-surface-1: rgba(255, 255, 255, .7);
+    --v-surface-2: rgba(255, 255, 255, .82);
+    --v-surface-3: rgba(226, 236, 242, .95);
+    --v-surface-solid: #ffffff;
+    --v-surface-input: #f6f9fb;
+    --v-line: rgba(16, 40, 54, .13);
+    --v-line-strong: rgba(16, 40, 54, .26);
+    --v-text-primary: #0f1d26;
+    --v-text-secondary: #2b4151;
+    --v-text-muted: #4a6272;
+    --v-text-disabled: #7d919e;
+    --v-accent-blue: #1d78aa;
+    --v-accent-blue-soft: rgba(29, 120, 170, .12);
+    --v-cta-bg: #173344;
+    --v-cta-bg-hover: #0f2633;
+    --v-cta-text: #f4f9fc;
+    --v-focus-ring: #1d78aa;
+    --v-danger: #b42f2f;
+    --v-danger-soft: rgba(200, 60, 60, .1);
+    --v-warning: #8a5a00;
+    --v-success: #1f7a45;
+    --color-zinc-50: #0f1d26;
+    --color-zinc-100: #172a36;
+    --color-zinc-200: #223847;
+    --color-zinc-300: #324c5c;
+    --color-zinc-400: #4a6272;
+    --color-zinc-500: #56707f;
+    --color-zinc-600: #7d919e;
+    --color-zinc-700: #b3c3cd;
+    --color-zinc-800: #d5e0e7;
+    --color-zinc-900: #e8eff3;
+    --color-zinc-950: #f4f8fa;
+    --color-white: #0f1d26;
+    --color-black: #ffffff;
+  }
+}
+
+/* Gemeinsame, schema-unabhängige Werte. */
+:root {
+  --v-radius-control: 10px;
+  --v-radius-field: 12px;
+  --v-radius-card: 16px;
+  --v-radius-sm: var(--v-radius-control);
+  --v-radius-md: var(--v-radius-field);
+  --v-radius-lg: var(--v-radius-card);
+  --v-radius-xl: var(--v-radius-card);
+  --v-space-1: 4px;
+  --v-space-2: 8px;
+  --v-space-3: 12px;
+  --v-space-4: 16px;
+  --v-space-5: 24px;
+  --v-space-6: 32px;
+  --v-text-xs: .75rem;    /* 12 px: kleinste erlaubte Schrift */
+  --v-text-sm: .8125rem;  /* 13 px */
+  --v-text-md: .875rem;   /* 14 px */
+  --v-text-lg: 1rem;
+  --v-text-xl: 1.25rem;
+  --v-text-2xl: 1.5rem;
+  --v-font-sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Yu Gothic UI", "Meiryo", sans-serif;
+  --v-font-mono: "Cascadia Code", Consolas, monospace;
+  --v-ease-out-strong: cubic-bezier(.23, 1, .32, 1);
+  --v-bg-panel: var(--v-surface-2);
+  --v-bg-elevated: var(--v-surface-3);
+  --v-bg-input: var(--v-surface-input);
+  --v-bg-hover: rgb(var(--v-tint) / .07);
+  --v-border-subtle: var(--v-line);
+  --v-border-default: var(--v-line);
+  --v-border-strong: var(--v-line-strong);
+  --v-accent: var(--v-text-primary);
+  --v-accent-soft: rgb(var(--v-tint) / .1);
+}
+
+/* Effekt-Stufe „Ruhig“: dekorative Bewegung und Leuchten aus, Inhalte bleiben. */
+:root[data-effects="calm"] .pointer-glow::after { display: none; }
+:root[data-effects="calm"] .prompt-max-sparks i { animation: none; }
+
+/* Während des Wechsels von Farbschema oder Effekt-Stufe keine Übergänge (siehe applyAppearance). */
+.v-theme-switching *, .v-theme-switching *::before, .v-theme-switching *::after { transition: none !important; }

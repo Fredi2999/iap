@@ -1,0 +1,31 @@
+id = "gemma-4-e2b-q4-k-m"
+display_name = "Gemma 4 E2B Instruct Q4_K_M"
+license = "Apache-2.0"
+source_url = "https://huggingface.co/ggml-org/gemma-4-E2B-it-GGUF"
+license_status = "Aus dem Prüfbericht vom 2026-10-02 (Modellkarte) übernommen; nicht erneut geprüft."
+family = "gemma4"
+gguf_file = "gemma-4-E2B-it-Q4_K_M.gguf"
+sha256 = "740185b21d22ceb83a11c3aa62ad5842ef32c70f6096d756bbee85a1e4ec34b8"
+file_bytes = 3106738272
+max_context_tokens = 131072
+measured_peak_rss_bytes_8k = 2933035008
+gpu_layer_bytes = [
+  48062496, 43977760, 43977760, 43977760, 43977760, 42993696, 39010336,
+  43977760, 39010336, 39010336, 48062496, 39010336, 39010336, 43977760,
+  39010336, 42993696, 43977760, 39010336, 39010336, 43977760, 27068448,
+  23085088, 25619488, 23085088, 23085088, 29704224, 23085088, 23085088,
+  25619488, 23085088, 27068448, 25619488, 25619488, 25619488, 25619488,
+]
+phase0_source = "docs/messung-phase0.md; llama.cpp b10930 (56381e407)"
+
+[[kv]]
+quantization = "f16"
+fixed_bytes = 12582912
+bytes_per_token = 6144
+source = "Direktmessung llama-server b10930, ctx=8192, np=1: SWA 12.00 MiB plus 48.00 MiB linear"
+
+[[kv]]
+quantization = "q8_0"
+fixed_bytes = 6684672
+bytes_per_token = 3264
+source = "Direktmessung llama-server b10930, ctx=8192, np=1: SWA 6.375 MiB plus 25.50 MiB linear"

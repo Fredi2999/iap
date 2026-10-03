@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://portable-ai.local/schema/skill-manifest",
+  "title": "PortableAI Skill Manifest",
+  "type": "object",
+  "required": ["skill"],
+  "properties": {
+    "skill": {
+      "type": "object",
+      "required": ["id", "name", "version", "runtime", "entry", "sha256"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{1,63}$" },
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "runtime": { "const": "wasm" },
+        "entry": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "properties": {
+        "fs_read": { "type": "array", "items": { "type": "string" } },
+        "fs_write": { "type": "array", "items": { "type": "string" } },
+        "network": { "type": "boolean" },
+        "exec": { "type": "boolean" },
+        "max_memory_mb": { "type": "integer", "minimum": 1 },
+        "max_runtime_ms": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "description"],
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "parameters": { "type": "object" }
+        }
+      }
+    }
+  }
+}

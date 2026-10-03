@@ -1,0 +1,30 @@
+IAP unter macOS starten
+==============================
+
+IAP ist bewusst unsigniert (Konzept 16: „ehrlich statt Apple-
+Developer-Programm für 99 USD/Jahr"). Beim ersten Start blockiert
+Gatekeeper deshalb die App. Es gibt zwei Wege, sie freizuschalten. Nichts
+davon macht dein System unsicher — du gibst genau dieser einen Datei
+einmalig Vertrauen.
+
+Weg 1 (empfohlen, ein Befehl im Terminal):
+
+    xattr -dr com.apple.quarantine "/Volumes/DEIN_STICK/IAP.app"
+
+Passe den Pfad an dein Stick-Volumen an. Anschließend startet IAP
+per Doppelklick wie jede andere App.
+
+Weg 2 (grafisch):
+
+    Systemeinstellungen → Datenschutz & Sicherheit
+    → beim Hinweis „IAP wurde blockiert" auf „Trotzdem öffnen"
+      klicken.
+
+Falls IAP nach einem Update erneut blockiert wird, wiederhole den
+Schritt einmalig für die neue Version.
+
+Hintergrund: Das Konzept legt fest, dass wir den Freigabeschritt hier
+dokumentieren, statt Gatekeeper zu umgehen oder Apple 99 USD/Jahr für
+Developer-ID + Notarisierung zu zahlen. Wer eine wirklich reibungslose
+Erfahrung braucht, kann IAP später gegen Aufpreis mit gültiger
+Developer-ID neu bauen — der Bau-Skript-Code ist offen.

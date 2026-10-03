@@ -1,0 +1,77 @@
+/* Chat: Unterhaltungsliste links, Nachrichten, Eingabe, Präsentation. */
+.iap-chat-layout { position: relative; height: 100%; min-height: 0; display: flex; gap: clamp(.6rem, 1.2vw, 1rem); }
+
+.iap-chat {
+  position: relative; flex: 1 1 auto; min-width: 0; height: 100%; min-height: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--v-line); border-radius: var(--v-radius-card);
+  background: var(--v-surface-1);
+  box-shadow: 0 22px 54px rgb(var(--v-shade) / .2), inset 0 1px rgb(var(--v-tint) / .06);
+  backdrop-filter: blur(19px) saturate(1.15); -webkit-backdrop-filter: blur(19px) saturate(1.15);
+}
+.iap-chat-header { flex: 0 0 auto; min-height: 3.5rem; display: flex; align-items: center; gap: var(--v-space-3); padding: var(--v-space-2) clamp(.8rem, 2vw, 1.5rem); border-bottom: 1px solid var(--v-line); }
+.iap-chat-list-toggle { display: none; }
+.iap-chat-title { display: flex; align-items: center; gap: var(--v-space-2); min-width: 0; flex: 1 1 auto; }
+.iap-chat-title h1 { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--v-text-lg); font-weight: 600; letter-spacing: -.01em; }
+.iap-chat-project { flex: 0 0 auto; max-width: 12rem; overflow: hidden; padding: 2px 9px; border: 1px solid var(--v-line); border-radius: 999px; color: var(--v-text-muted); font-size: var(--v-text-xs); text-overflow: ellipsis; white-space: nowrap; }
+.iap-chat-actions { display: flex; align-items: center; gap: var(--v-space-2); flex: 0 0 auto; }
+
+.iap-messages { flex: 1 1 auto; min-height: 0; margin: 0; padding: clamp(1rem, 3vh, 2rem) clamp(1rem, 3vw, 2.5rem); overflow-y: auto; list-style: none; }
+.iap-message { display: grid; grid-template-columns: 2.8rem minmax(0, 1fr); column-gap: var(--v-space-3); row-gap: var(--v-space-1); width: min(100%, 52rem); margin: 0 auto var(--v-space-5); padding-bottom: var(--v-space-5); border-bottom: 1px solid var(--v-line); }
+.iap-message:last-child { border-bottom: 0; }
+.iap-message-meta { grid-column: 1 / -1; display: flex; align-items: baseline; gap: var(--v-space-4); color: var(--v-text-muted); font-size: var(--v-text-xs); }
+.iap-message-meta strong { color: var(--v-text-primary); font-size: var(--v-text-sm); font-weight: 600; }
+.iap-message-body { grid-column: 2; min-width: 0; max-width: 44rem; color: var(--v-text-secondary); font-size: .9375rem; line-height: 1.6; overflow-wrap: anywhere; }
+.iap-message.is-user .iap-message-body { color: var(--v-text-primary); }
+.iap-message-body .v-markdown, .iap-message-body .v-markdown :is(p, li) { font-size: inherit; line-height: inherit; }
+.iap-message-body .v-markdown > * { margin-top: .5rem !important; margin-bottom: 0 !important; }
+.iap-message-body .v-markdown > :first-child { margin-top: 0 !important; }
+.iap-user-text { white-space: pre-wrap; }
+.iap-message-body :is(p, ul, ol, pre, blockquote) { max-width: 100%; }
+.iap-tool-traces { margin: 0 0 var(--v-space-3); padding: var(--v-space-2) var(--v-space-3); border: 1px solid var(--v-line); border-radius: var(--v-radius-field); background: rgb(var(--v-tint) / .03); font-size: var(--v-text-xs); }
+.iap-tool-traces summary { cursor: pointer; color: var(--v-text-muted); }
+.iap-tool-traces ol { margin: var(--v-space-2) 0 0; padding-left: 1rem; }
+.iap-tool-traces li { margin: var(--v-space-2) 0; }
+.iap-tool-traces span, .iap-tool-traces em { margin-left: var(--v-space-2); color: var(--v-text-muted); font-style: normal; }
+.iap-tool-traces pre { margin: var(--v-space-1) 0 0; padding: var(--v-space-2); overflow-x: auto; border-radius: 6px; background: rgb(var(--v-shade) / .25); white-space: pre-wrap; font-size: var(--v-text-xs); }
+.iap-pending { border-bottom: 0; }
+.iap-empty-chat { min-height: 100%; display: flex; }
+.iap-empty-chat > * { flex: 1; }
+
+.iap-composer-zone { flex: 0 0 auto; width: min(100% - 2rem, 50rem); margin: 0 auto var(--v-space-3); }
+.iap-chat-status { display: flex; justify-content: space-between; gap: var(--v-space-4); padding: 0 var(--v-space-1) var(--v-space-2); color: var(--v-text-muted); font-size: var(--v-text-xs); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 1100px) {
+  .iap-chat-list-toggle { display: inline-flex; }
+}
+@media (max-width: 720px) {
+  .iap-chat-actions .v-btn span { display: none; }
+  .iap-message { grid-template-columns: 1fr; }
+  .iap-message-body { grid-column: 1; }
+  .iap-composer-zone { width: calc(100% - 1rem); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .iap-chat { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--v-surface-solid); }
+}
+
+/* Präsentation (liegt auf Body-Ebene über allem) ----------------------------- */
+.iap-presentation { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; min-width: 0; height: 100dvh; background: var(--v-canvas); color: var(--v-text-primary); animation: presentation-enter 180ms ease-out; }
+.iap-presentation-bar { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: var(--v-space-4); min-height: 4.25rem; padding: var(--v-space-3) var(--v-space-6); background: var(--v-surface-solid); border-color: var(--v-line); border-style: solid; border-width: 0 0 1px; }
+.iap-presentation-bar.bottom { border-width: 1px 0 0; }
+.iap-presentation-title { min-width: 0; }
+.iap-presentation-title small { display: block; color: var(--v-text-muted); font-size: var(--v-text-xs); }
+.iap-presentation-title strong { display: block; overflow: hidden; font-size: var(--v-text-lg); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.iap-presentation-meta { display: flex; align-items: center; gap: var(--v-space-4); color: var(--v-text-muted); font-size: var(--v-text-sm); font-variant-numeric: tabular-nums; }
+.iap-presentation-body { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; overflow-y: auto; padding: clamp(1.5rem, 5vw, 4rem); }
+.iap-presentation-role { display: flex; align-items: center; gap: var(--v-space-3); margin-bottom: var(--v-space-4); color: var(--v-text-muted); font-size: var(--v-text-sm); font-weight: 600; }
+.iap-presentation-role::after { content: ""; flex: 1; height: 1px; background: var(--v-line); }
+.iap-presentation-copy { color: var(--v-text-primary); font-size: clamp(1.15rem, 2.2vw, 1.75rem); font-weight: 350; line-height: 1.6; overflow-wrap: anywhere; }
+.iap-presentation-copy .v-markdown, .iap-presentation-copy .v-markdown :is(p, li) { font-size: inherit; line-height: inherit; }
+.iap-presentation-copy .v-markdown pre { max-width: 100%; overflow-x: auto; font-size: .85rem; }
+.iap-presentation-dots { max-width: min(45vw, 30rem); display: flex; align-items: center; gap: .35rem; overflow-x: auto; scrollbar-width: thin; padding: .6rem .15rem; }
+.iap-presentation-dots button { flex: 0 0 auto; height: .35rem; min-height: .35rem; padding: 0; border: 0; border-radius: 9999px; background: var(--v-line-strong); transition: width 200ms var(--v-ease-out-strong), background-color 200ms ease; }
+.iap-presentation-dots button.current { background: var(--v-accent-blue); }
+@keyframes presentation-enter { from { opacity: 0; } }
+@media (max-width: 700px) { .iap-presentation-bar { padding: .7rem 1rem; } .iap-presentation-meta .hint { display: none; } }
+@media (max-height: 550px) { .iap-presentation-body { align-items: flex-start; padding-block: 1rem; } }
+@media (prefers-reduced-motion: reduce) { .iap-presentation, .iap-presentation-dots button { animation: none; transition: none; } }

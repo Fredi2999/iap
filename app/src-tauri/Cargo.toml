@@ -1,0 +1,95 @@
+[package]
+name = "portable-ai-app"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+rust-version = "1.85"
+
+[lib]
+name = "portable_ai_app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "iap"
+path = "src/main.rs"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+pa-code = { path = "../../crates/pa-code" }
+pa-core = { path = "../../crates/pa-core" }
+pa-export = { path = "../../crates/pa-export" }
+pa-scheduler = { path = "../../crates/pa-scheduler" }
+pa-skills = { path = "../../crates/pa-skills" }
+pa-update = { path = "../../crates/pa-update" }
+pa-inference = { path = "../../crates/pa-inference" }
+pa-launcher = { path = "../../crates/pa-launcher" }
+pa-memory = { path = "../../crates/pa-memory" }
+pa-pci = { path = "../../crates/pa-pci" }
+pa-policy = { path = "../../crates/pa-policy" }
+pa-tools = { path = "../../crates/pa-tools" }
+pa-types = { path = "../../crates/pa-types" }
+pa-vault = { path = "../../crates/pa-vault" }
+
+hex = "0.4"
+rand_core = { version = "0.6", features = ["getrandom"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+# tray-icon + image-png: sichtbares Symbol im Infobereich (Öffnen/Beenden) für den Pet-Betrieb.
+tauri = { version = "2.11.5", features = ["tray-icon", "image-png"] }
+thiserror = "2.0"
+toml = "0.9"
+zeroize = { version = "1.8", features = ["zeroize_derive"] }
+
+# Chat mit eigenen Dokumenten (Feature 1). Nur in der App, damit der CLI-Launcher
+# nicht wächst. DOCX ist ein ZIP-Archiv mit XML: nur Deflate, ohne Verschlüsselung
+# und weitere Kompressionsverfahren. PDF über lopdf ohne Standardfeatures (keine
+# Zeit- und Parallelbibliotheken); pdf-extract wäre genauer, zieht aber mehr mit.
+zip = { version = "4.0.0", default-features = false, features = ["deflate-flate2"] }
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+quick-xml = "0.42"
+lopdf = { version = "0.45", default-features = false }
+# Leistungs-Check (Feature 3): Speicher des Modellprozesses messen. Dieselbe
+# Version nutzt bereits pa-launcher; es kommt keine neue Bibliothek dazu.
+sysinfo = "0.37"
+
+# Bildschirmaufnahme: PNG im Arbeitsspeicher (nie als Datei). Dieselbe Version
+# liegt schon über tauri im Abhängigkeitsbaum.
+png = "0.18"
+tauri-plugin-global-shortcut = "2"
+
+# Lokale Aufnahme, Wiedergabe und Bildschirmaufnahme über Windows-APIs. Das
+# `windows`-Crate ist bereits über tauri/wry im Baum; es kommen nur Feature-
+# Schalter dazu, keine neue Bibliothek.
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+    "Win32_Media_Audio",
+    "Win32_Networking_WinHttp",
+    "Win32_Security",
+    "Win32_Storage_FileSystem",
+    "Win32_Storage_Xps",
+    "Win32_System_Com",
+    "Win32_System_JobObjects",
+    "Win32_System_SystemInformation",
+    "Win32_System_Threading",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+# Gmail (IMAP/SMTP) braucht TLS über rohes TCP. `schannel` nutzt die in Windows eingebaute
+# SChannel-Bibliothek und bringt keinen eigenen Kryptocode mit; die Alternative rustls würde
+# mehrere MB Krypto-Code mitbringen (Größenbudget, AGENTS.md). Nur für Windows.
+schannel = "0.1"
+
+[dev-dependencies]
+tempfile = "3.20"
+
+[workspace]

@@ -1,0 +1,37 @@
+# Optionales Textmodell. Q4_K_M aus bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF.
+# Die App begrenzt die Auswahl derzeit auf 131072 Kontext-Token.
+# Ressourcendaten: gebündelter llama-server b10930, Entwicklungs-PC,
+# CPU-only, 8192 Kontext-Token, ein Slot, sieben Threads.
+# Die 8-GB-Zielhardware wurde damit noch nicht physisch geprüft.
+id = "qwen3-4b-instruct-2507-q4-k-m"
+display_name = "Qwen3 4B Instruct 2507 Q4_K_M"
+license = "Apache-2.0 (vermutet)"
+source_url = "https://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF"
+license_status = "NICHT geprüft: Hugging Face war bei der Erstellung nicht erreichbar. Vor Weitergabe an der Modellkarte bestätigen."
+family = "qwen3"
+gguf_file = "Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf"
+sha256 = "2fde00ce69dd4899c70d020845e2638353015bba0fdf161b3eb965f2bca4464e"
+file_bytes = 2497280736
+max_context_tokens = 131072
+measured_peak_rss_bytes_8k = 5547028480
+gpu_layer_bytes = [
+  63888384, 63888384, 63888384, 63888384, 63888384, 63888384,
+  56792064, 56792064, 63888384, 56792064, 56792064, 63888384,
+  56792064, 56792064, 63888384, 56792064, 56792064, 63888384,
+  56792064, 56792064, 63888384, 56792064, 56792064, 63888384,
+  56792064, 56792064, 63888384, 56792064, 56792064, 63888384,
+  56792064, 56792064, 63888384, 63888384, 63888384, 63888384,
+]
+phase0_source = "Direktmessung Entwicklungs-PC, gebündelter llama-server b10930, CPU-only, ctx=8192, np=1, threads=7; GPU-Layer aus GGUF-Metadaten"
+
+[[kv]]
+quantization = "f16"
+fixed_bytes = 0
+bytes_per_token = 147456
+source = "Direktmessung llama-server b10930: 1152 MiB KV bei ctx=8192, 36 Layer, linear"
+
+[[kv]]
+quantization = "q8_0"
+fixed_bytes = 0
+bytes_per_token = 78336
+source = "Direktmessung llama-server b10930: 612 MiB KV bei ctx=8192, 36 Layer, linear"

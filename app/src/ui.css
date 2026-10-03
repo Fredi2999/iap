@@ -1,0 +1,63 @@
+/* Gemeinsame Seitenbausteine: Karten, Felder, Listen, Raster.
+   Jede Seite setzt ihr Layout aus diesen Klassen zusammen, damit Abstände,
+   Schriftgrößen und Radien überall gleich sind. Farben nur über Tokens. */
+
+.v-page { display: flex; flex-direction: column; gap: var(--v-space-5); color: var(--v-text-secondary); }
+.v-grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--v-space-4); align-items: start; }
+.v-grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--v-space-4); align-items: start; }
+.v-grid-aside { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); gap: var(--v-space-4); align-items: start; }
+@media (max-width: 1024px) { .v-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .v-grid-aside { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .v-grid-2, .v-grid-3 { grid-template-columns: 1fr; } }
+
+.v-card { min-width: 0; padding: var(--v-space-4) var(--v-space-5); border: 1px solid var(--v-line); border-radius: var(--v-radius-card); background: var(--v-surface-2); }
+.v-card-title { display: flex; align-items: center; justify-content: space-between; gap: var(--v-space-3); margin: 0 0 var(--v-space-3); color: var(--v-text-primary); font-size: var(--v-text-md); font-weight: 600; }
+.v-card-title small { color: var(--v-text-muted); font-size: var(--v-text-xs); font-weight: 500; }
+.v-card-text { margin: 0; color: var(--v-text-muted); font-size: var(--v-text-sm); line-height: 1.5; }
+
+.v-stack { display: flex; flex-direction: column; gap: var(--v-space-3); }
+.v-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--v-space-2); }
+.v-row-end { justify-content: flex-end; }
+.v-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.v-label { color: var(--v-text-secondary); font-size: var(--v-text-sm); font-weight: 550; }
+.v-help { color: var(--v-text-muted); font-size: var(--v-text-xs); line-height: 1.45; }
+.v-field input, .v-field select, .v-field textarea { width: 100%; }
+.v-muted { color: var(--v-text-muted); }
+.v-num { font-family: var(--v-font-mono); font-variant-numeric: tabular-nums; }
+
+.v-list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.v-list > li { display: flex; align-items: center; gap: var(--v-space-3); min-height: 2.75rem; padding: var(--v-space-2) var(--v-space-3); border-radius: var(--v-radius-control); }
+.v-list > li + li { border-top: 1px solid var(--v-line); border-radius: 0; }
+.v-list-main { flex: 1 1 auto; min-width: 0; }
+.v-list-main strong { display: block; overflow: hidden; color: var(--v-text-primary); font-size: var(--v-text-sm); font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
+.v-list-main span { color: var(--v-text-muted); font-size: var(--v-text-xs); }
+
+.v-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 1.5rem; padding: 0 8px; border: 1px solid var(--v-line); border-radius: 9999px; color: var(--v-text-secondary); font-size: var(--v-text-xs); font-weight: 550; white-space: nowrap; }
+.v-chip.accent { border-color: color-mix(in oklab, var(--v-accent-blue) 45%, transparent); background: var(--v-accent-blue-soft); color: var(--v-text-primary); }
+.v-chip.warn { border-color: color-mix(in oklab, var(--v-warning) 50%, transparent); color: var(--v-warning); }
+.v-chip.danger { border-color: color-mix(in oklab, var(--v-danger) 50%, transparent); color: var(--v-danger); }
+
+.v-notice { padding: var(--v-space-3) var(--v-space-4); border: 1px solid var(--v-line); border-radius: var(--v-radius-field); background: rgb(var(--v-tint) / .04); color: var(--v-text-secondary); font-size: var(--v-text-sm); line-height: 1.5; }
+.v-notice.warn { border-color: color-mix(in oklab, var(--v-warning) 45%, transparent); }
+
+.v-details > summary { cursor: pointer; color: var(--v-text-secondary); font-size: var(--v-text-sm); font-weight: 550; list-style: none; }
+.v-details > summary::-webkit-details-marker { display: none; }
+.v-details > summary::before { content: "›"; display: inline-block; width: 1rem; color: var(--v-text-muted); transition: transform 160ms var(--v-ease-out-strong); }
+.v-details[open] > summary::before { transform: rotate(90deg); }
+.v-details > :not(summary) { margin-top: var(--v-space-3); }
+
+.v-file-button { position: relative; overflow: hidden; }
+.v-file-button input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* Sicherheitsnetz für ältere Seitenteile mit Tailwind-Klassen:
+   keine Schrift unter 12 px, Beschriftungen in normaler Schrift statt
+   Monospace-Großbuchstaben. Zahlen und Code dürfen weiter Monospace sein. */
+.iap-module-frame :is(.text-\[8px\], .text-\[9px\], .text-\[10px\], .text-\[11px\], .text-\[10\.5px\]) { font-size: 12px !important; }
+.iap-module-frame .uppercase:not(kbd) { text-transform: none !important; letter-spacing: 0 !important; }
+.iap-module-frame .uppercase.font-mono { font-family: var(--v-font-sans) !important; font-weight: 600; }
+.iap-module-frame :is([class*="tracking-[0."], .tracking-wider, .tracking-widest) { letter-spacing: 0 !important; }
+
+/* Hilfe-Modus „Kompakt“ (Einstellungen): Erklärsätze verschwinden, Warnungen, Statusmeldungen und
+   Hinweise zu Datenschutz oder Sicherheit bleiben. Markiert sind nur reine Erklärungen (data-hint)
+   und die Beschreibung unter dem Seitentitel; das Hilfe-Symbol der Seite zeigt sie weiterhin. */
+:root[data-help="compact"] [data-hint],
+:root[data-help="compact"] .v-page-header-text > p { display: none; }

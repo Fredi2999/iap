@@ -1,0 +1,45 @@
+# Zweitmodell (Konzept 3.2): Llama-3.2-3B-Instruct-Abliterated Q4_K_M.
+#
+# Manuell wählbar, nicht Default. Aktiviert bei Nutzung eine strengere
+# GBNF-Grammatik (siehe pa_inference::llama32::STRICT_JSON_ENVELOPE_GBNF).
+#
+# CPU-Messung mit der gebündelten GGUF und dem gebündelten llama-server:
+# Windows 11, 8192 Kontext-Token, ein Slot, sieben Threads, kein GPU-Offload.
+# Eine Messung auf einem 8-GB-Rechner und GPU-Layer-Messungen stehen noch aus.
+#
+# Empfohlene Quelle: `mlabonne/Llama-3.2-3B-Instruct-abliterated`,
+# Q4_K_M-GGUF (ca. 2,0 GB). Andere Abliterated-Varianten funktionieren
+# ebenfalls, solange sie das offizielle Llama-3.2-Chat-Template tragen.
+id = "llama32-3b-abl-q4-k-m"
+display_name = "Llama-3.2-3B-Instruct-Abliterated Q4_K_M"
+license = "Llama 3.2 Community License + Acceptable Use Policy"
+source_url = "https://huggingface.co/mlabonne/Llama-3.2-3B-Instruct-abliterated"
+license_status = "NICHT geprüft: Hugging Face war bei der Erstellung nicht erreichbar. Lizenz aus dem Basismodell Llama 3.2 abgeleitet; vor Weitergabe an der Modellkarte bestätigen."
+family = "llama-3.2"
+gguf_file = "llama32-3b-abl-q4.gguf"
+sha256 = "3a8ad1732ca90048bc5ecf44dcb3b789469e8a68d389ab79516853bf0d27ad34"
+file_bytes = 2241004512
+max_context_tokens = 131072
+measured_peak_rss_bytes_8k = 4401922048
+# GPU-Layer bleiben grobe Richtwerte bis zur Messung auf dedizierter GPU.
+gpu_layer_bytes = [
+  65000000, 65000000, 65000000, 65000000, 65000000, 65000000, 65000000,
+  65000000, 65000000, 65000000, 65000000, 65000000, 65000000, 65000000,
+  65000000, 65000000, 65000000, 65000000, 65000000, 65000000, 65000000,
+  65000000, 65000000, 65000000, 65000000, 65000000, 65000000, 65000000,
+]
+phase0_source = "Direktmessung Windows 11, gebündelter llama-server, CPU-only, ctx=8192, np=1; GPU-Layer noch ungemessen"
+
+# llama-server meldet für diese GGUF bei 8192 Token exakt 896 MiB f16
+# beziehungsweise 476 MiB q8_0. Es gibt keinen festen KV-Anteil.
+[[kv]]
+quantization = "f16"
+fixed_bytes = 0
+bytes_per_token = 114688
+source = "Direktmessung llama-server, ctx=8192, np=1: 896 MiB KV linear, kein fester Anteil"
+
+[[kv]]
+quantization = "q8_0"
+fixed_bytes = 0
+bytes_per_token = 60928
+source = "Direktmessung llama-server, ctx=8192, np=1: 476 MiB KV linear, kein fester Anteil"

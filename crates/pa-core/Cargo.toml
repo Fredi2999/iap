@@ -1,0 +1,22 @@
+[package]
+name = "pa-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+pa-policy = { path = "../pa-policy" }
+pa-tools = { path = "../pa-tools" }
+pa-types = { path = "../pa-types" }
+pa-vault = { path = "../pa-vault" }
+rand_core.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+argon2.workspace = true
+tempfile = "3.20"
+zeroize.workspace = true

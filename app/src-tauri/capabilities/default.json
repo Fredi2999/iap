@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Nur Kernfensterrechte; Vault, Modell und Streaming laufen ausschließlich über Rust-Kommandos.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

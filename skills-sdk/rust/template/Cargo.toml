@@ -1,0 +1,23 @@
+# Rust-Vorlage für einen PortableAI-WASM-Skill.
+#
+# Bauen (Vendor-Cache vorausgesetzt, sobald wasm32-wasi verfügbar ist):
+#   cargo build --release --target wasm32-wasi
+# Die entstehende `target/wasm32-wasi/release/skill_template.wasm` gehört
+# neben dem manifest.toml in `AI/skills/user/<id>/`.
+[package]
+name = "skill_template"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+# Beabsichtigte Deps für den Ausbau, wenn wasmtime + wit-bindgen im Vendor
+# sind. Aktuell auskommentiert, damit das Template ohne diese Bausteine
+# kompilierbar bleibt.
+# [dependencies]
+# wit-bindgen = "0.42"
+
+# Eigener Sub-Workspace, damit die Vorlage den Haupt-Workspace nicht auflädt.
+[workspace]

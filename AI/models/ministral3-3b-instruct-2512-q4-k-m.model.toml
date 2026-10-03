@@ -1,0 +1,37 @@
+# Optionales Textmodell. Q4_K_M aus mistralai/Ministral-3-3B-Instruct-2512-GGUF.
+# Vision benötigt weitere Komponenten und wird von IAP hier nicht aktiviert.
+# Die App begrenzt die Auswahl derzeit auf 131072 Kontext-Token.
+# Ressourcendaten: gebündelter llama-server b10930, Entwicklungs-PC,
+# CPU-only, 8192 Kontext-Token, ein Slot, sieben Threads.
+# Die 8-GB-Zielhardware wurde damit noch nicht physisch geprüft.
+id = "ministral3-3b-instruct-2512-q4-k-m"
+display_name = "Ministral 3 3B Instruct 2512 Q4_K_M"
+license = "Apache-2.0 (vermutet)"
+source_url = "https://huggingface.co/mistralai/Ministral-3-3B-Instruct-2512-GGUF"
+license_status = "NICHT geprüft: Hugging Face war bei der Erstellung nicht erreichbar. Vor Weitergabe an der Modellkarte bestätigen."
+family = "ministral3"
+gguf_file = "Ministral-3-3B-Instruct-2512-Q4_K_M.gguf"
+sha256 = "9ed150d4367e68df0ac8e1540f6ddc65b42d0ee26378329d1ecbca60f93fc5f8"
+file_bytes = 2147023008
+max_context_tokens = 131072
+measured_peak_rss_bytes_8k = 4657463296
+gpu_layer_bytes = [
+  73605120, 73605120, 73605120, 73605120, 65495040, 73605120,
+  65495040, 65495040, 73605120, 65495040, 65495040, 73605120,
+  65495040, 65495040, 73605120, 65495040, 65495040, 73605120,
+  65495040, 65495040, 73605120, 65495040, 65495040, 73605120,
+  73605120, 73605120,
+]
+phase0_source = "Direktmessung Entwicklungs-PC, gebündelter llama-server b10930, CPU-only, ctx=8192, np=1, threads=7; GPU-Layer aus GGUF-Metadaten"
+
+[[kv]]
+quantization = "f16"
+fixed_bytes = 0
+bytes_per_token = 106496
+source = "Direktmessung llama-server b10930: 832 MiB KV bei ctx=8192, 26 Layer, linear"
+
+[[kv]]
+quantization = "q8_0"
+fixed_bytes = 0
+bytes_per_token = 56576
+source = "Direktmessung llama-server b10930: 442 MiB KV bei ctx=8192, 26 Layer, linear"

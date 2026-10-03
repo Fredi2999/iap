@@ -1,0 +1,65 @@
+# Local Phase-0 measurement inputs. These are large, machine-specific binaries
+# and model weights, not source artifacts.
+tools/pa-probe/.runtime/
+tools/pa-probe/target/
+tools/pa-probe/risk3-app/node_modules/
+tools/pa-probe/risk3-app/dist/
+tools/pa-probe/risk3-app/src-tauri/target/
+target/
+
+# Build-Ausgaben und Abhängigkeiten (werden neu erzeugt)
+node_modules/
+target/
+target-ascii/
+target-ascii-app/
+**/target/
+dist/
+dist-qa*/
+app/dist/
+app/dist-qa*/
+
+# Große, maschinenspezifische Binärdaten: Modelle, Laufzeit, Tresore, Build-Werkzeuge
+*.gguf
+*.db
+*.meta
+*.wasm-cache
+AI/bin/win-x64/
+AI/data/
+tools/build/
+tools/pa-probe/
+.snapshots/
+.trash/
+
+# Persönliche Werkzeug- und Sitzungskonfiguration (Entwicklungswerkzeuge, Skills, Hooks, MCP).
+# Gehört nicht zum Produkt: Wer das Repository herunterlädt, bekommt die Standardversion.
+.claude/
+.mcp.json
+# Lokale Sicherung persönlicher Dateien im Projektordner (siehe _lokal/LIESMICH.txt); nie einchecken.
+_lokal/
+.playwright-mcp/
+.agents/
+.codex/
+.impeccable/
+
+# Alles, was beim Benutzen entsteht: Tresore und ihre Begleitdateien, Sprache, Arbeitsordner,
+# Zusatzpakete, Zugangsdaten. Nichts davon darf je ins Repository.
+*.db-wal
+*.db-shm
+*.db.partial
+*.db.next
+*.meta.partial
+AI/workspace/
+AI/packs/
+ui-language
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.kdbx
+
+# Mock-Vorschau und Screenshot-Prüfung
+app/dist-mock/
+screenshots/

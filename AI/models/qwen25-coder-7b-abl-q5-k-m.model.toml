@@ -1,0 +1,58 @@
+# Optionales Zweitmodell für Programmcode: Qwen2.5-Coder-7B-Instruct, "abliterated"
+# (Ablehnungsrichtung unterdrückt, Konzept 3.2), Quantisierung Q5_K_M.
+#
+# Quelle: huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-abliterated-GGUF
+# (Quantisierung von huihui-ai/Qwen2.5-Coder-7B-Instruct-abliterated).
+# Lizenz: Apache-2.0 (Modellkarte und GGUF-Metadatum `general.license`).
+# Der SHA-256 der Datei wurde nach dem Download gegen den von Hugging Face
+# gemeldeten Wert geprüft (2026-10-02).
+#
+# GRÖSSER UND LANGSAMER ALS DAS STANDARDMODELL. Der Anzeigename trägt den
+# Hinweis bewusst, damit er in jeder Modellliste steht. Messung 2026-10-02 auf
+# dem Entwicklungs-PC (AMD Ryzen 7 PRO 250, CPU-only, 7 Threads, 8192 Kontext,
+# f16-KV, ein Slot) mit demselben Skript und denselben Flags für beide Modelle:
+#   Antworten        5,9 bis 6,3 Token/s    (Gemma 4 E2B Q4_K_M: 16,5 bis 16,8)
+#   Prompt, 2287 Tok 11,3 Token/s = 203 s   (Gemma, 2042 Token: 94 Token/s = 22 s)
+#   Spitzen-RSS      5,62 GB                (Gemma: 2,80 GB)
+# Auf einem 8-GB-Rechner wurde das Modell NICHT gemessen. Mit 5,6 GB Spitzen-RSS
+# bleibt dort kaum Reserve; die Ressourcenplanung meldet dann eine Warnung.
+# Nicht geprüft: Qualität der Werkzeugaufrufe und des strukturierten JSON-Outputs
+# mit diesem Modell (Konzept 3.2 warnt bei abliterierten Varianten davor).
+#
+# `family = "qwen3"` wählt nur den Prompt-Adapter (ChatML, Stop-Marke
+# `<|im_end|>`, Sampling 0,7/0,8). Qwen2.5 und Qwen3 teilen dieses Format; die
+# Zeichenfolge ist hier ein Adapter-Schlüssel und kein Modellname.
+#
+# Der nativ unterstützte Kontext beträgt 32768 Token (GGUF `qwen2.context_length`).
+id = "qwen25-coder-7b-abl-q5-k-m"
+display_name = "Langsamer: Qwen2.5-Coder 7B Abliterated Q5_K_M"
+license = "Apache-2.0"
+source_url = "https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-abliterated-GGUF"
+license_status = "Modellkarte und GGUF-Metadatum general.license, geprüft 2026-10-02 (siehe Kopfkommentar)."
+family = "qwen3"
+gguf_file = "Qwen2.5-Coder-7B-Instruct-abliterated-Q5_K_M.gguf"
+sha256 = "a0e62cdf3348a9f680adae4abd2785508b2a06f009e815271cd512c11d43281b"
+file_bytes = 5444832096
+max_context_tokens = 32768
+measured_peak_rss_bytes_8k = 5622251520
+# 28 Blöcke rückwärts, dann die Ausgabeschicht (Reihenfolge von `--gpu-layers`).
+gpu_layer_bytes = [
+  169527296, 169527296, 169527296, 169527296, 169527296, 160266240,
+  160266240, 169527296, 160266240, 160266240, 169527296, 160266240,
+  160266240, 169527296, 160266240, 160266240, 169527296, 160266240,
+  160266240, 169527296, 160266240, 160266240, 169527296, 160266240,
+  160266240, 169527296, 169527296, 169527296, 447068160,
+]
+phase0_source = "Direktmessung Entwicklungs-PC 2026-10-02, gebündelter llama-server b10930, CPU-only, ctx=8192, np=1, threads=7; Spitzen-RSS = PeakWorkingSet64 nach /health und einer Ein-Token-Anfrage (höchster von vier f16-Läufen); GPU-Layer aus den GGUF-Metadaten"
+
+[[kv]]
+quantization = "f16"
+fixed_bytes = 0
+bytes_per_token = 57344
+source = "Direktmessung llama-server b10930, ctx=8192, np=1: 448 MiB KV, 28 Layer, linear, kein fester Anteil"
+
+[[kv]]
+quantization = "q8_0"
+fixed_bytes = 0
+bytes_per_token = 30464
+source = "Direktmessung llama-server b10930, ctx=8192, np=1: 238 MiB KV, 28 Layer, linear, kein fester Anteil"

@@ -1,0 +1,10 @@
+{
+  "version": "test-1",
+  "files": [
+    {
+      "path": "payload.txt",
+      "bytes": 11,
+      "sha256": "2753a8030623307e2f664fa3c5f2a8b84f702e53427bffb44c0e482f1f910a12"
+    }
+  ]
+}

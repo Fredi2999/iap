@@ -1,0 +1,283 @@
+@import "tailwindcss";
+
+/* ===========================================================================
+   IAP Basis-Stile
+   ---------------------------------------------------------------------------
+   Alle Farben kommen aus tokens.css (Dunkel und Hell). Diese Datei definiert
+   nur Formen, Abstände und Zustände der gemeinsamen Bausteine (v-*), damit
+   jede Seite dieselben Knöpfe, Felder und Schalter nutzt.
+   =========================================================================== */
+
+:root {
+  --v-motion-instant: 90ms;
+  --v-motion-fast: 160ms;
+  --v-motion-default: 240ms;
+  --v-motion-slow: 400ms;
+  /* Eine Kurvenfamilie für die ganze App (Emil Kowalski): kräftiges ease-out für
+     Ein- und Ausblenden, ease-in-out für Bewegung auf dem Bildschirm, Schubladen-
+     Kurve für Seitenleisten. Kein ease-in, kein Nachfedern. */
+  --v-ease-out: var(--v-ease-out-strong);
+  --v-ease-spring: var(--v-ease-out-strong);
+  --v-ease-in-out: cubic-bezier(.77, 0, .175, 1);
+  --v-ease-drawer: cubic-bezier(.32, .72, 0, 1);
+  --v-shadow-sm: 0 2px 8px rgb(var(--v-shade) / .18);
+  --v-shadow-md: 0 8px 24px rgb(var(--v-shade) / .22);
+  --v-shadow-lg: 0 18px 42px rgb(var(--v-shade) / .3);
+  --v-shadow-glass: 0 14px 36px rgb(var(--v-shade) / .25);
+  --v-shadow-focus: 0 0 0 2px var(--v-focus-ring);
+  --v-glass-specular: rgb(var(--v-tint) / .14);
+  --v-text-placeholder: var(--v-text-muted);
+
+  font-family: var(--v-font-sans);
+  color: var(--v-text-primary);
+  background: var(--v-canvas);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--v-canvas);
+  color: var(--v-text-primary);
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--v-accent-blue-soft);
+  color: var(--v-text-primary);
+}
+
+/* Scrollbars ------------------------------------------------------------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--v-tint) / .22) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgb(var(--v-tint) / .2);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgb(var(--v-tint) / .36); background-clip: padding-box; }
+
+/* Formularelemente ------------------------------------------------------- */
+button, select, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+input, textarea, select {
+  background: var(--v-surface-input);
+  border: 1px solid var(--v-line);
+  border-radius: var(--v-radius-field);
+  padding: 0.6rem 0.85rem;
+  color: var(--v-text-primary);
+  font-size: var(--v-text-md);
+  transition: border-color var(--v-motion-fast) ease, box-shadow var(--v-motion-fast) ease, background-color var(--v-motion-fast) ease;
+}
+input[type="checkbox"], input[type="radio"], input[type="range"] { padding: 0; }
+input::placeholder, textarea::placeholder { color: var(--v-text-placeholder); opacity: 1; }
+input:hover, textarea:hover, select:hover { border-color: var(--v-line-strong); }
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--v-focus-ring);
+  box-shadow: var(--v-shadow-focus);
+}
+input:disabled, textarea:disabled, select:disabled { opacity: .6; cursor: not-allowed; }
+select option { background-color: var(--v-surface-solid); color: var(--v-text-primary); }
+
+/* Flächen ---------------------------------------------------------------- */
+.v-glass-panel, .v-glass-card, .v-bezel-outer {
+  position: relative;
+  background: var(--v-surface-2);
+  border: 1px solid var(--v-line);
+  border-radius: var(--v-radius-card);
+  box-shadow: 0 10px 32px rgb(var(--v-shade) / .14), inset 0 1px rgb(var(--v-tint) / .06);
+  backdrop-filter: blur(13px) saturate(1.15);
+  -webkit-backdrop-filter: blur(13px) saturate(1.15);
+}
+.v-glass-card { padding: 1.5rem; transition: border-color var(--v-motion-fast) ease, box-shadow var(--v-motion-fast) ease; }
+.v-glass-card:hover { border-color: var(--v-line-strong); }
+.v-bezel-outer { padding: 0; }
+.v-bezel-inner { background: transparent; border: 0; border-radius: var(--v-radius-card); padding: 1.5rem; }
+
+/* Knöpfe ----------------------------------------------------------------- */
+.v-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--v-radius-control);
+  font-weight: 550;
+  font-size: var(--v-text-md);
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: background-color var(--v-motion-fast) ease, border-color var(--v-motion-fast) ease, color var(--v-motion-fast) ease, transform 120ms var(--v-ease-out-strong);
+}
+.v-btn:active:not(:disabled) { transform: scale(0.97); }
+.v-btn:focus-visible { outline: none; box-shadow: var(--v-shadow-focus); }
+.v-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.v-btn-primary,
+button[class*="bg-[var(--v-accent)]"],
+.bg-\[var\(--v-accent\)\] {
+  background: var(--v-cta-bg) !important;
+  color: var(--v-cta-text) !important;
+  border-color: var(--v-cta-bg) !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .v-btn-primary:hover:not(:disabled),
+  button[class*="bg-[var(--v-accent)]"]:hover:not(:disabled),
+  .bg-\[var\(--v-accent\)\]:hover:not(:disabled) { background: var(--v-cta-bg-hover) !important; }
+}
+
+.v-btn-ghost {
+  background: rgb(var(--v-tint) / .06);
+  color: var(--v-text-primary);
+  border: 1px solid var(--v-line);
+}
+@media (hover: hover) and (pointer: fine) {
+  .v-btn-ghost:hover:not(:disabled) { background: rgb(var(--v-tint) / .11); border-color: var(--v-line-strong); }
+}
+
+.v-btn-danger {
+  background: var(--v-danger-soft);
+  color: var(--v-danger);
+  border: 1px solid color-mix(in oklab, var(--v-danger) 40%, transparent);
+}
+
+.v-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.4rem;
+  border: 0;
+  border-radius: var(--v-radius-control);
+  color: var(--v-text-muted);
+  background: transparent;
+  transition: background-color var(--v-motion-fast) ease, color var(--v-motion-fast) ease, transform 120ms var(--v-ease-out-strong);
+}
+.v-btn-icon:hover { background: rgb(var(--v-tint) / .08); color: var(--v-text-primary); }
+.v-btn-icon:active { transform: scale(0.94); }
+.v-btn-icon:focus-visible { outline: 2px solid var(--v-focus-ring); outline-offset: 1px; }
+
+/* Schalter --------------------------------------------------------------- */
+.v-switch { position: relative; display: inline-flex; height: 26px; width: 46px; flex-shrink: 0; cursor: pointer; border-radius: 9999px; user-select: none; }
+.v-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.v-switch-slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background: rgb(var(--v-tint) / .14);
+  border: 1px solid var(--v-line-strong);
+  border-radius: 9999px;
+  transition: background-color 200ms ease, border-color 200ms ease;
+}
+.v-switch-slider::before {
+  position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+  background: #ffffff; border-radius: 50%;
+  box-shadow: 0 2px 5px rgb(0 0 0 / .35);
+  transition: transform 200ms var(--v-ease-out-strong);
+}
+.v-switch input:checked + .v-switch-slider { background: var(--v-accent-blue); border-color: var(--v-accent-blue); }
+.v-switch input:checked + .v-switch-slider::before { transform: translateX(20px); }
+.v-switch input:focus-visible + .v-switch-slider { box-shadow: var(--v-shadow-focus); }
+
+.v-apple-switch {
+  position: relative; display: inline-flex; align-items: center;
+  height: 26px; width: 48px; flex-shrink: 0; cursor: pointer; padding: 2px;
+  border-radius: 9999px; border: 1px solid var(--v-line-strong);
+  background: rgb(var(--v-tint) / .14);
+  transition: background-color 200ms ease, border-color 200ms ease;
+}
+.v-apple-switch.active { background: var(--v-accent-blue); border-color: var(--v-accent-blue); }
+.v-apple-switch:focus-visible { outline: none; box-shadow: var(--v-shadow-focus); }
+.v-apple-thumb {
+  pointer-events: none; display: block; height: 20px; width: 20px; border-radius: 9999px;
+  background: #ffffff; box-shadow: 0 2px 6px rgb(0 0 0 / .35);
+  transform: translateX(0);
+  transition: transform 200ms var(--v-ease-out-strong);
+}
+.v-apple-switch.active .v-apple-thumb { transform: translateX(22px); }
+
+/* Info-Hinweis ------------------------------------------------------------ */
+.v-info {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1px solid var(--v-line-strong); color: var(--v-text-muted);
+  font-size: 11px; font-weight: 600; cursor: help; position: relative; vertical-align: middle;
+}
+.v-info::before { content: "i"; font-style: italic; font-size: 11px; line-height: 1; }
+.v-info:hover { color: var(--v-text-primary); border-color: var(--v-text-primary); }
+.v-info[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--v-surface-solid); color: var(--v-text-primary);
+  border: 1px solid var(--v-line-strong); border-radius: 8px;
+  padding: 6px 10px; font-size: 12px; font-weight: 400; font-style: normal; line-height: 1.4;
+  white-space: normal; width: max-content; max-width: 260px; pointer-events: none; z-index: 100;
+  box-shadow: var(--v-shadow-md);
+}
+
+/* Segmentierte Auswahl ----------------------------------------------------- */
+.v-segmented {
+  display: inline-flex; flex-wrap: wrap; max-width: 100%; gap: 2px; padding: 3px;
+  border-radius: var(--v-radius-control);
+  background: rgb(var(--v-tint) / .05);
+  border: 1px solid var(--v-line);
+}
+.v-segmented button {
+  padding: 0.35rem 0.85rem; border-radius: calc(var(--v-radius-control) - 3px);
+  font-size: var(--v-text-xs); font-weight: 550; color: var(--v-text-muted);
+  background: transparent; border: none;
+  transition: background-color var(--v-motion-fast) ease, color var(--v-motion-fast) ease, transform 120ms var(--v-ease-out-strong);
+}
+.v-segmented button:active { transform: scale(0.96); }
+.v-segmented button:hover { color: var(--v-text-primary); }
+.v-segmented button.active { background: rgb(var(--v-tint) / .14); color: var(--v-text-primary); box-shadow: inset 0 1px rgb(var(--v-tint) / .12); }
+.v-segmented button:focus-visible { outline: 2px solid var(--v-focus-ring); outline-offset: 1px; }
+
+/* Verschachtelter Hauptknopf (Entsperren) ---------------------------------- */
+.v-btn-nested {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 10px 8px 20px; border-radius: 9999px;
+  background: var(--v-cta-bg); color: var(--v-cta-text);
+  font-weight: 600; font-size: var(--v-text-md); letter-spacing: -0.01em;
+  border: 1px solid var(--v-cta-bg);
+  transition: transform 160ms var(--v-ease-out-strong), background-color 160ms ease;
+  cursor: pointer;
+}
+.v-btn-nested:hover { background: var(--v-cta-bg-hover); }
+.v-btn-nested:active { transform: scale(0.97); }
+.v-btn-nested:disabled { opacity: .55; cursor: not-allowed; }
+.v-btn-nested .v-icon-circle {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgb(var(--v-shade) / .12);
+  display: flex; align-items: center; justify-content: center; color: inherit;
+  transition: transform 160ms var(--v-ease-out-strong);
+}
+.v-btn-nested:hover .v-icon-circle { transform: translateX(2px); }
+
+/* Animationen ------------------------------------------------------------ */
+@keyframes v-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.v-fade-in { animation: v-fade-in var(--v-motion-default) var(--v-ease-spring) forwards; }
+@keyframes v-pulse-glow { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.85; } }
+.v-pulse-glow { animation: v-pulse-glow 2.5s ease-in-out infinite; }
+@keyframes v-pulse-slow { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
+.v-pulse-slow { animation: v-pulse-slow 2.4s ease-in-out infinite; }
+@keyframes v-breathe { 0%, 100% { transform: scale(1); opacity: 0.88; } 50% { transform: scale(1.03); opacity: 1; } }
+.v-breathe { animation: v-breathe 3.2s ease-in-out infinite; }
+@keyframes v-beam-scan { 0% { transform: translateX(-100%); } 50% { transform: translateX(150%); } 100% { transform: translateX(-100%); } }
+.v-beam-scanner { animation: v-beam-scan 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+@keyframes v-hud-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgb(var(--v-tint) / .4); } 70% { box-shadow: 0 0 0 6px rgb(var(--v-tint) / 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .v-fade-in, .v-pulse-glow, .v-pulse-slow, .v-breathe, .v-beam-scanner { animation: none; }
+  *, *::before, *::after { scroll-behavior: auto !important; }
+}
+:root[data-effects="calm"] :is(.v-pulse-glow, .v-pulse-slow, .v-breathe, .v-beam-scanner) { animation: none; }
