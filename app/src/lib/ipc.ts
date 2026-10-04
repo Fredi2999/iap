@@ -16,6 +16,7 @@ import type {
   AuditEntryView,
   AuditFilter,
   AvailableModel,
+  CatalogModel,
   BootstrapStatus,
   Conversation,
   ConversationDetail,
@@ -132,6 +133,9 @@ export function deleteConversation(id: string): Promise<void> {
   return invoke("delete_conversation", { conversationId: id });
 }
 
+export function modelCatalog(): Promise<CatalogModel[]> {
+  return invoke("model_catalog");
+}
 export function installedModels(): Promise<AvailableModel[]> {
   return invoke("installed_models");
 }

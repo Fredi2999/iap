@@ -87,7 +87,7 @@ use pa_launcher::{
 use pa_memory::{embedder::HashingEmbedder, IngestFact, MemoryStore};
 use pa_types::{
     ipc::{
-        AuditEntryView, AuditFilter, AvailableModel, BootstrapStatus, ConnectorConfig,
+        AuditEntryView, AuditFilter, AvailableModel, BootstrapStatus, CatalogModel, ConnectorConfig,
         ConversationDetail, MemoryExport, MemoryRetrieveResponse, MemoryUpsertRequest,
         ModelSettings, SendMessageRequest, SettingsSnapshot, SettingsUpdate, StreamEvent,
         ThemePreference, TierOverrideChange, UserProfile, VaultInfo, VaultSwitchRequest,
@@ -195,6 +195,7 @@ pub fn run() -> tauri::Result<()> {
             rename_conversation,
             delete_conversation,
             installed_models,
+            model_catalog,
             select_model,
             get_model_settings,
             save_model_settings,
@@ -1019,6 +1020,52 @@ fn installed_models_list(state: &AppState) -> AppResult<Vec<AvailableModel>> {
         }
     }
     Ok(models)
+}
+
+/// Liefert alle Modelle des Katalogs, auch die ohne GGUF-Datei auf dem Stick.
+///
+/// Lizenz und Quelle stehen nur in der `*.model.toml`, nicht im geprüften Deskriptor; sie werden
+/// deshalb separat gelesen. Fehlerhafte Deskriptoren fehlen, wie bei `installed_models`.
+#[tauri::command]
+fn model_catalog(state: State<'_, AppState>) -> AppResult<Vec<CatalogModel>> {
+    let bootstrap = ensure_bootstrap(&state)?;
+    let package = PackageRoot::new(&bootstrap.package_root)?;
+    let models_dir = bootstrap.package_root.join("AI").join("models");
+    let mut catalog: Vec<CatalogModel> = Vec::new();
+    for entry in std::fs::read_dir(&models_dir)?.flatten() {
+        let name = entry.file_name();
+        let Some(name) = name.to_str().filter(|name| name.ends_with(".model.toml")) else {
+            continue;
+        };
+        let relative = Path::new("AI/models").join(name);
+        let Ok(descriptor) = load_model_descriptor(&package, &relative) else {
+            continue;
+        };
+        let extra: Option<toml::Table> = std::fs::read_to_string(entry.path())
+            .ok()
+            .and_then(|text| text.parse().ok());
+        let text_of = |key: &str| {
+            extra
+                .as_ref()
+                .and_then(|table| table.get(key))
+                .and_then(|value| value.as_str())
+                .map(str::to_owned)
+        };
+        catalog.push(CatalogModel {
+            installed: models_dir.join(&descriptor.gguf_file).exists(),
+            is_default: descriptor.id == bootstrap.descriptor_id,
+            license: text_of("license"),
+            source_url: text_of("source_url"),
+            peak_ram_bytes_8k: descriptor.measured_peak_rss_bytes_8k,
+            id: descriptor.id,
+            display_name: descriptor.display_name,
+            family: descriptor.family,
+            file_bytes: descriptor.file_bytes,
+            max_context_tokens: descriptor.max_context_tokens,
+        });
+    }
+    catalog.sort_by(|a, b| b.is_default.cmp(&a.is_default).then(a.display_name.cmp(&b.display_name)));
+    Ok(catalog)
 }
 
 fn default_model_settings(model: &AvailableModel) -> ModelSettings {

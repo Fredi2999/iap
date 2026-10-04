@@ -1,9 +1,10 @@
 <script lang="ts">
   import { t, tk, i18n, LANGUAGES, locale } from "../lib/i18n/index.svelte";
-  import { applySettings, getModelSettings, getUserProfile, installedModels, saveModelSettings, switchVault, updateUserProfile, hostTraces, setAskOnExit, loadUiState, saveUiState } from "../lib/ipc";
+  import { applySettings, getModelSettings, getUserProfile, installedModels, modelCatalog, saveModelSettings, switchVault, updateUserProfile, hostTraces, setAskOnExit, loadUiState, saveUiState } from "../lib/ipc";
   import type { HostTraceReport } from "../lib/types";
   import type {
     AvailableModel,
+    CatalogModel,
     BootstrapStatus,
     HardwareTier,
     ModelSettings,
@@ -37,6 +38,7 @@
   let { settings, bootstrap, effects, onEffectsChange, onThemeChange, onLanguageChange, onSettingsChanged }: Props = $props();
 
   let models = $state<AvailableModel[]>([]);
+  let catalog = $state<CatalogModel[]>([]);
   let tierChoice = $state<"auto" | HardwareTier>(untrack(() => settings.tier_override ?? "auto"));
   let modelChoice = $state<string>(untrack(() => settings.model_id));
   let modelSettings = $state<ModelSettings | null>(null);
@@ -85,6 +87,7 @@
     void initPetStyle();
     try {
       models = await installedModels();
+      catalog = await modelCatalog();
       modelSettings = await getModelSettings(modelChoice);
     } catch (reason) {
       error = reason;
@@ -336,6 +339,21 @@
       <div class="v-row v-row-end"><button type="button" class="v-btn v-btn-primary" onclick={saveProfile} disabled={profileSaving}>{t(profileSaving ? "Speichere …" : "Profil speichern")}</button></div>
     {/if}
   </section>
+
+  {#if catalog.length}
+    <section class="v-card v-stack" aria-labelledby="set-catalog">
+      <div><h2 id="set-catalog" class="v-card-title">{t("Alle Modelle")}</h2><p data-hint class="v-help">{t("Alle bekannten Modelle des Katalogs. Fehlende Dateien legst du in AI/models/ auf den Stick.")}</p></div>
+      <ul class="v-stack" style="list-style:none;padding:0;margin:0;gap:.75rem">
+        {#each catalog as entry (entry.id)}
+          <li class="v-stack" style="gap:.15rem;opacity:{entry.installed ? 1 : .75}">
+            <span class="v-label">{entry.display_name}{entry.is_default ? ` (${t("Standard")})` : ""} · {entry.installed ? t("installiert") : t("nicht auf dem Stick")}</span>
+            <span class="v-help">{(entry.file_bytes / 1e9).toFixed(2)} GB · {t("Arbeitsspeicher (Spitze, 8k Kontext)")}: {(entry.peak_ram_bytes_8k / 1e9).toFixed(1)} GB{entry.license ? ` · ${t("Lizenz")}: ${entry.license}` : ""}</span>
+            {#if entry.source_url}<span class="v-help">{t("Quelle")}: {entry.source_url}</span>{/if}
+          </li>
+        {/each}
+      </ul>
+    </section>
+  {/if}
 
   <PerformanceCard {models} onError={(reason) => (error = reason)} />
 

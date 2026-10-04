@@ -55,6 +55,24 @@ pub struct AvailableModel {
     pub is_default: bool,
 }
 
+/// Ein Modell aus dem Katalog `AI/models/*.model.toml`, auch wenn die GGUF-Datei fehlt.
+///
+/// Die Oberfläche zeigt damit alle bekannten Modelle samt Speicherbedarf und Quelle, damit der
+/// Nutzer sieht, was er nachladen kann, statt nur die bereits installierten zu kennen.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CatalogModel {
+    pub id: String,
+    pub display_name: String,
+    pub family: String,
+    pub file_bytes: u64,
+    pub peak_ram_bytes_8k: u64,
+    pub max_context_tokens: u32,
+    pub license: Option<String>,
+    pub source_url: Option<String>,
+    pub installed: bool,
+    pub is_default: bool,
+}
+
 /// Konversation samt Nachrichten für den Chat-Ansichts-Aufruf.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ConversationDetail {

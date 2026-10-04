@@ -57,6 +57,19 @@ export interface AvailableModel {
   is_default: boolean;
 }
 
+export interface CatalogModel {
+  id: string;
+  display_name: string;
+  family: string;
+  file_bytes: number;
+  peak_ram_bytes_8k: number;
+  max_context_tokens: number;
+  license: string | null;
+  source_url: string | null;
+  installed: boolean;
+  is_default: boolean;
+}
+
 export type HardwareTier = "unsupported" | "t0" | "t1" | "t2" | "t3";
 export type KvQuantization = "f16" | "q8_0";
 

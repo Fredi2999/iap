@@ -14,6 +14,12 @@ const DAY = 86_400_000;
 
 const uiState = new Map<string, string>();
 
+const catalog = [
+  { id: "gemma-4-e2b-q4-k-m", display_name: "Gemma 4 E2B Instruct Q4_K_M", family: "gemma4", file_bytes: 3_106_738_272, peak_ram_bytes_8k: 2_900_000_000, max_context_tokens: 131_072, license: "Apache-2.0", source_url: "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF", installed: true, is_default: true },
+  { id: "llama32-3b-abl", display_name: "Llama 3.2 3B abliterated Q4_K_M", family: "llama", file_bytes: 2_240_000_000, peak_ram_bytes_8k: 4_400_000_000, max_context_tokens: 131_072, license: "Llama 3.2 Community License", source_url: "https://huggingface.co/mradermacher/Llama-3.2-3B-Instruct-abliterated-GGUF", installed: false, is_default: false },
+  { id: "qwen3-4b-instruct-2507-q4-k-m", display_name: "Qwen3 4B Instruct 2507 Q4_K_M", family: "qwen3", file_bytes: 2_497_280_736, peak_ram_bytes_8k: 5_547_028_480, max_context_tokens: 131_072, license: "Apache-2.0", source_url: "https://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF", installed: false, is_default: false },
+];
+
 const model = {
   id: "gemma-4-e2b-q4-k-m",
   display_name: "Gemma 4 E2B Instruct Q4_K_M",
@@ -67,6 +73,7 @@ function answer(cmd: string, payload: Record<string, unknown> | undefined): unkn
     case "settings_snapshot": return snapshot;
     case "apply_settings": return snapshot;
     case "installed_models": return [model];
+    case "model_catalog": return catalog;
     case "get_ui_language": return "de";
     case "set_ui_language": return null;
     case "load_ui_state": return uiState.get(String(payload?.key)) ?? null;
