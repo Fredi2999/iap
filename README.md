@@ -74,7 +74,7 @@ die Entwicklung in [`AGENTS.md`](AGENTS.md).
   IAP rund 3 GB Arbeitsspeicher. Das größere Coder-Modell braucht rund 5,6 GB und ist deutlich langsamer.
 - **USB-Stick** (oder ein anderer Datenträger) mit mindestens **8 GB** frei für Programm und Pflichtdateien
   (rund 6 GB), **rund 17 GB** mit allen optionalen Modellen und Paketen. Schnelle Sticks lohnen sich: Beim ersten Wählen eines
-  Modells kopiert IAP es in einen Cache auf dem PC (`%LOCALAPPDATA%\PortableAI\model-cache`).
+  Modells kopiert IAP es in einen Cache auf dem PC (`%LOCALAPPDATA%\IAP\model-cache`).
 
 ## Modelle und Laufzeit herunterladen
 
@@ -138,8 +138,8 @@ Kopieren in den Cache gegen den Wert in der `*.model.toml`.
 
 | Modell | Datei | Größe | Quelle | Lizenz | Hinweis |
 |---|---|---:|---|---|---|
-| Qwen3 4B Instruct 2507 | `Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf` | 2,50 GB | [bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF](https://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF) | Apache-2.0 (Basismodell) | |
-| Ministral 3 3B Instruct 2512 | `Ministral-3-3B-Instruct-2512-Q4_K_M.gguf` | 2,15 GB | [mistralai/Ministral-3-3B-Instruct-2512-GGUF](https://huggingface.co/mistralai/Ministral-3-3B-Instruct-2512-GGUF) | Apache-2.0 | |
+| Qwen3 4B Instruct 2507 | `Qwen_Qwen3-4B-Instruct-2507-Q4_K_M.gguf` | 2,50 GB | [bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF](https://huggingface.co/bartowski/Qwen_Qwen3-4B-Instruct-2507-GGUF) | Apache-2.0 (Basismodell, nicht erneut geprüft) | |
+| Ministral 3 3B Instruct 2512 | `Ministral-3-3B-Instruct-2512-Q4_K_M.gguf` | 2,15 GB | [mistralai/Ministral-3-3B-Instruct-2512-GGUF](https://huggingface.co/mistralai/Ministral-3-3B-Instruct-2512-GGUF) | Apache-2.0 (nicht erneut geprüft) | |
 | Qwen2.5-Coder 7B, „abliterated“ | `Qwen2.5-Coder-7B-Instruct-abliterated-Q5_K_M.gguf` | 5,44 GB | [bartowski/Qwen2.5-Coder-7B-Instruct-abliterated-GGUF](https://huggingface.co/bartowski/Qwen2.5-Coder-7B-Instruct-abliterated-GGUF) | Apache-2.0 | für Programmcode; **deutlich langsamer** (gemessen 5,9 bis 6,3 gegen 16,5 Token/s bei Gemma) |
 
 „Abliterated“ heißt: Das Modell wurde so verändert, dass es kaum noch Anfragen ablehnt. Das ist eine bewusste Wahl;
@@ -225,7 +225,7 @@ AI\
 └── data\                         Tresore (.db und .meta), Arbeitsordner, WebView-Daten
 ```
 
-Außerhalb des Sticks legt IAP nur an: den Modell-Cache (`%LOCALAPPDATA%\PortableAI\model-cache`), eine kurzlebige
+Außerhalb des Sticks legt IAP nur an: den Modell-Cache (`%LOCALAPPDATA%\IAP\model-cache`), eine kurzlebige
 Arbeitskopie des Tresors unter `%TEMP%\PortableAI\vault-hot` und, falls du ihn startest, den PCI-Begleiter unter
 `%LOCALAPPDATA%\IAPPCI`. Beim Beenden fragt IAP, ob diese Spuren entfernt werden sollen.
 
@@ -279,9 +279,7 @@ docs/            Konzept, Handover, Messungen, Prüfberichte
 
 Wichtige Dokumente: [`docs/konzept.md`](docs/konzept.md) (Verweis auf das Architekturkonzept),
 [`docs/pakete.md`](docs/pakete.md), [`docs/messung-phase0.md`](docs/messung-phase0.md),
-[`docs/handoff-windows-session-2026-10-02.md`](docs/handoff-windows-session-2026-10-02.md) (aktueller Stand),
-[`docs/github-freigabe-pruefung-2026-10-01.md`](docs/github-freigabe-pruefung-2026-10-01.md) (Prüfung für eine
-öffentliche Veröffentlichung).
+[`docs/handover-2026-10-04.md`](docs/handover-2026-10-04.md) (aktueller Stand und offene Punkte).
 
 ## Stand und Grenzen
 
@@ -293,7 +291,8 @@ Wichtige Dokumente: [`docs/konzept.md`](docs/konzept.md) (Verweis auf das Archit
   echte Aufrufe der Konnektoren, die Gmail-TLS-Verbindung, der PCI-Begleiter bei echter Nutzung, der Code-Agent mit
   echtem Modell, Befehle in der echten App sowie Passwortwechsel und Löschen an einem echten Tresor.
 - **Befehle sind keine Sandbox** (siehe oben).
-- **Keine CI** im Repository; Prüfungen laufen von Hand.
+- **CI:** Der Workflow `.github/workflows/ci.yml` prüft jede Änderung (Windows: Format, Lint, Tests, Frontend; Linux: Darstellung und
+  Lizenzen). Ob er auf GitHub bereits grün durchlief, ist noch nicht bestätigt, denn er wurde in `iap` noch nicht ausgeführt.
 
 ## Lizenzen
 
