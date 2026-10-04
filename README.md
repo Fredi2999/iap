@@ -292,7 +292,7 @@ Wichtige Dokumente: [`docs/konzept.md`](docs/konzept.md) (Verweis auf das Archit
   echtem Modell, Befehle in der echten App sowie Passwortwechsel und Löschen an einem echten Tresor.
 - **Befehle sind keine Sandbox** (siehe oben).
 - **CI:** Der Workflow `.github/workflows/ci.yml` prüft jede Änderung (Windows: Format, Lint, Tests, Frontend; Linux: Darstellung und
-  Lizenzen). Ob er auf GitHub bereits grün durchlief, ist noch nicht bestätigt, denn er wurde in `iap` noch nicht ausgeführt.
+  Lizenzen). Stand 2026-10-04: Der Lauf auf `main` war grün.
 
 ## Lizenzen
 
