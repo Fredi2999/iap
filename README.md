@@ -303,6 +303,7 @@ Wichtige Dokumente: [`docs/konzept.md`](docs/konzept.md) (Verweis auf das Archit
 - **Bloub** (Animationskern des Avatars, `app/src/lib/vendor/bloub`): MIT, Copyright Jérémy Perret, siehe dortige
   `LICENSE` und `NOTICE.md`.
 - **Oberflächeneffekte** (Hintergrund, Wortmarke, Laufband, Meldungen und weitere) sind eigene Umsetzungen in Svelte und CSS,
-  ohne fremden Komponentencode.
+  ohne fremden Komponentencode. Wer eigene Ersatzdateien mit anderer Lizenz einsetzen will, legt sie unter `app/src/private/` ab (gleiche
+  relative Pfade wie in `app/src/`); dieser Ordner wird beim Bauen bevorzugt und ist nicht Teil des Repositorys.
 - **Modelle, Laufzeit und Pakete** haben eigene Lizenzen (siehe Tabellen oben) und sind nicht Teil dieses Repositorys.
   Die Lizenzangaben sind Hinweise nach der jeweiligen Modellkarte, keine Rechtsberatung.

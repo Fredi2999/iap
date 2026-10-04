@@ -63,3 +63,6 @@ ui-language
 # Mock-Vorschau und Screenshot-Prüfung
 app/dist-mock/
 screenshots/
+
+# Privater Überlagerungs-Ordner für Oberflächen-Effekte mit eigener Lizenz (siehe docs/handover-2026-10-04.md)
+app/src/private/
