@@ -8,8 +8,33 @@ Telemetrie. Alles, was du eingibst, wird in einem verschlüsselten Tresor auf de
 > sind geplant (Phase 4), laufen aber noch nicht. Was geprüft ist und was nicht, steht unter
 > [Stand und Grenzen](#stand-und-grenzen).
 
+## Schnellstart (Windows)
+
+Es gibt **noch kein fertiges Programm zum Herunterladen**. Du baust IAP einmal selbst und legst die Modelle dazu. Die Downloads
+der Modelle sind dabei der größte Teil (über 6 GB). Jeder Schritt ist weiter unten ausführlich beschrieben.
+
+1. **Voraussetzungen:** Windows 10 oder 11 (64 Bit), mindestens 8 GB RAM, ein USB-Stick mit mindestens 8 GB frei
+   ([Details](#voraussetzungen)). Zum Bauen zusätzlich Rust (MSVC), Node.js, PowerShell und Strawberry Perl
+   ([Details](#bauen-und-auf-den-stick-bringen)).
+2. **Repository klonen** in einen Pfad ohne Umlaute, zum Beispiel `git clone https://github.com/Fredi2999/iap.git C:\src\iap`.
+3. **llama.cpp-Laufzeit laden:** genau Build `b10930` (`llama-b10930-bin-win-cpu-x64.zip`), entpacken nach `AI\bin\win-x64\`
+   ([Details](#llamacpp-laufzeit)).
+4. **Bauen:** die Befehle aus [Bauen und auf den Stick bringen](#bauen-und-auf-den-stick-bringen) ausführen (`cargo fetch`,
+   `npm ci`, `bundle.ps1`). Das Ergebnis liegt in `dist\iap-windows\`.
+5. **Auf den Stick kopieren:** den **Inhalt** von `dist\iap-windows\` auf den Stick legen.
+6. **Modelle laden:** mindestens die drei Pflichtdateien (Gemma 4 E2B, Llama 3.2 3B, EmbeddingGemma) nach `AI\models\` auf dem
+   Stick. Hashes zum Nachprüfen stehen [hier](#pflichtdateien-stehen-im-mitgelieferten-manifest). Fehlt eine Datei oder stimmt
+   ein Hash nicht, startet IAP nicht und nennt die Datei.
+7. **Starten:** `Start.cmd` oder `iap.exe` vom Stick. Beim ersten Start legst du ein Master-Passwort fest. Es lässt sich
+   **nicht** zurücksetzen.
+
+Nicht geprüft: Ich habe diese Schritte nicht auf einem frisch eingerichteten Windows-PC von Anfang bis Ende durchgespielt.
+Die Programme sind nicht signiert, Windows oder dein Virenscanner können deshalb warnen. Meldet sich ein Schritt nicht wie
+beschrieben, bitte als Issue melden.
+
 ## Inhalt
 
+- [Schnellstart (Windows)](#schnellstart-windows)
 - [Was IAP kann](#was-iap-kann)
 - [Sicherheit und Datenschutz](#sicherheit-und-datenschutz)
 - [Voraussetzungen](#voraussetzungen)
