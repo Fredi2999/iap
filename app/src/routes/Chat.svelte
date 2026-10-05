@@ -51,6 +51,7 @@
   import CompareBlock from "../lib/components/CompareBlock.svelte";
   import { appState } from "../lib/stores/app.svelte";
   import { conversation, setActive } from "../lib/stores/conversation.svelte";
+  import { conversationToOpenAtStart } from "../lib/startConversation";
 
   interface ToolTrace {
     kind: "call" | "result" | "error";
@@ -305,11 +306,9 @@
   async function refresh() {
     try {
       conversations = await listConversations();
-      if (!currentId && conversations.length > 0) {
-        // Die gemeinsame Unterhaltung (Startseite, Pet) hat Vorrang vor der neuesten.
-        const shared = conversations.find((entry) => entry.id === conversation.activeId);
-        await selectConversation((shared ?? conversations[0]).id);
-      }
+      // Der Chat beginnt leer; nur eine schon aktive gemeinsame Unterhaltung (Startseite, Pet) wird übernommen.
+      const open = conversationToOpenAtStart(conversations, conversation.activeId, currentId);
+      if (open) await selectConversation(open);
     } catch (reason) {
       error = reason;
     }
