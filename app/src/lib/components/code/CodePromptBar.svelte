@@ -20,9 +20,11 @@
     onSend: () => void;
     onStop: () => void;
     onError?: (reason: unknown) => void;
+    /** Eindeutige Kennung des Eingabefelds (der Code-Bereich zeigt mehrere Leisten). */
+    inputId: string;
   }
 
-  let { value = $bindable(""), busy, locked = false, placeholder, settings, onSettingsChanged, onOpenSettings, onSend, onStop, onError }: Props = $props();
+  let { value = $bindable(""), busy, locked = false, placeholder, settings, onSettingsChanged, onOpenSettings, onSend, onStop, onError, inputId }: Props = $props();
 
   onMount(async () => {
     try {
@@ -44,6 +46,7 @@
 
 <PromptBar
   variant="code"
+  {inputId}
   bind:value
   {placeholder}
   {busy}

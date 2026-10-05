@@ -7,6 +7,7 @@
 // Wichtig: Es wird nur eingebunden, wenn mit VITE_MOCK=1 gebaut wird (siehe main.ts). Die
 // Beispieldaten hier gelangen also nie in ein ausgeliefertes Paket. Das Backend (Rust) wird damit
 // nicht geprüft, nur die Darstellung.
+import { emit } from "@tauri-apps/api/event";
 import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 
 const NOW = 1_790_000_000_000;
@@ -64,6 +65,37 @@ const events = [
 
 const calendarOverview = { supported: true, sources: [], air_gap: false };
 
+const MOCK_SOURCE = 'fn main() {\n    println!("hi");\n}\n';
+
+/** Vorschläge des simulierten Code-Agenten (nur für die Vorschau). */
+const staged = new Map<string, { is_new: boolean; proposed: string; added: number; removed: number }>();
+
+/**
+ * Spielt eine Agenten-Anfrage nach: Schritte, Vorschlag, Antwort. Enthält die Aufgabe „kaputt“,
+ * endet sie mit dem rohen Werkzeugaufruf als Text (der Fehlerfall, den die Oberfläche abfangen muss).
+ */
+function runMockAgent(text: string): void {
+  const send = (delay: number, event: Record<string, unknown>) => window.setTimeout(() => void emit("code-agent-event", event), delay);
+  if (/kaputt/i.test(text)) {
+    send(300, { kind: "working", step: 1 });
+    send(900, { kind: "done", text: '{"action":"call","tool":""list_dir"","arguments":{"path":"."}}', changes: 0 });
+    return;
+  }
+  send(300, { kind: "working", step: 1 });
+  send(500, { kind: "tool_call", tool: "list_dir", arguments: '{"path":"."}' });
+  send(700, { kind: "tool_result", tool: "list_dir", preview: "src/, README.md, main.rs" });
+  send(900, { kind: "working", step: 2 });
+  send(1100, { kind: "tool_call", tool: "read_file", arguments: '{"path":"main.rs"}' });
+  send(1300, { kind: "tool_result", tool: "read_file", preview: "fn main() { println!(\"hi\"); }" });
+  send(1500, { kind: "working", step: 3 });
+  send(1700, { kind: "tool_call", tool: "propose_edit", arguments: '{"path":"main.rs","old":"println!(\\"hi\\");","new":"let name = \\"IAP\\"; println!(\\"hallo {name}\\");"}' });
+  window.setTimeout(() => {
+    staged.set("main.rs", { is_new: false, proposed: 'fn main() {\n    let name = "IAP";\n    println!("hallo {name}");\n}\n', added: 2, removed: 1 });
+    void emit("code-agent-event", { kind: "tool_result", tool: "propose_edit", preview: "Vorschlag für main.rs gespeichert (+2 −1)." });
+  }, 1900);
+  send(2300, { kind: "done", text: "Ich habe in main.rs eine Änderung vorgeschlagen: Die Ausgabe nutzt jetzt eine Variable. Prüfe sie im Editor, bevor du sie übernimmst.", changes: 1 });
+}
+
 /** Antworten je Befehl; was hier fehlt, beantwortet `fallback`. */
 function answer(cmd: string, payload: Record<string, unknown> | undefined): unknown {
   switch (cmd) {
@@ -92,7 +124,26 @@ function answer(cmd: string, payload: Record<string, unknown> | undefined): unkn
     case "voice_status": return { available: true, block: null, state: "idle", muted: false, packs: [], language: "de", voice_available: true, benchmark: null };
     case "mail_status": return { supported: true, enabled: false, has_password: false, polling: false, running: false, last_run_unix_ms: null, next_run_unix_ms: null, last_error: null, sent_last_hour: 0, sent_today: 0, blocked_reason: null };
     case "get_model_settings": return { model_id: model.id, context_tokens: null, temperature: 0.7, top_p: 0.9 };
-    case "list_installed_skills": case "list_active_facts": case "list_projects": case "conversation_sources": case "conversation_documents": case "snapshot_list": case "code_agent_changes": return [];
+    case "list_installed_skills": case "list_active_facts": case "list_projects": case "conversation_sources": case "conversation_documents": case "snapshot_list": return [];
+    case "code_agent_send": runMockAgent(String(payload?.text ?? "")); return null;
+    case "code_agent_cancel": return null;
+    case "code_agent_reset": staged.clear(); return null;
+    case "code_agent_changes": return [...staged].map(([path, change]) => ({ path, is_new: change.is_new, added: change.added, removed: change.removed }));
+    case "code_agent_change": {
+      const change = staged.get(String(payload?.path));
+      if (!change) throw "Dazu gibt es keinen Vorschlag (mehr).";
+      return { path: String(payload?.path), is_new: change.is_new, proposed: change.proposed };
+    }
+    case "code_agent_discard": if (payload?.path) staged.delete(String(payload.path)); else staged.clear(); return null;
+    case "read_code_file": return MOCK_SOURCE;
+    case "diff_code_file": return {
+      old_path: String(payload?.relativePath ?? ""), new_path: String(payload?.relativePath ?? ""),
+      hunks: [{ old_start: 2, old_lines: 1, new_start: 2, new_lines: 2, lines: [
+        { op: "delete", text: '    println!("hi");' },
+        { op: "insert", text: '    let name = "IAP";' },
+        { op: "insert", text: '    println!("hallo {name}");' },
+      ] }],
+    };
     case "code_roots_status": return { host_path: null, stick_path: "D:\\IAP\\arbeit", approved: [] };
     case "code_list": case "list_workspace": return { root: "D:\\IAP\\arbeit", relative_path: String(payload?.relativePath ?? ""), entries: [
       { name: "src", relative_path: "src", is_directory: true, bytes: 0, modified_unix_ms: null },

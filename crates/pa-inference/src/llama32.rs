@@ -42,7 +42,7 @@ pub const STRICT_JSON_ENVELOPE_GBNF: &str = r#"
 root ::= call | answer
 call ::= "{\"action\":\"call\",\"tool\":\"" name "\",\"arguments\":" object "}"
 answer ::= "{\"action\":\"answer\",\"text\":" string "}"
-name ::= "\"" [a-zA-Z_][a-zA-Z0-9_]* "\""
+name ::= [a-zA-Z_][a-zA-Z0-9_]*
 object ::= "{}" | "{" string ":" value ("," string ":" value)* "}"
 array ::= "[]" | "[" value ("," value)* "]"
 value ::= object | array | string | number | "true" | "false" | "null"
@@ -145,5 +145,23 @@ mod tests {
     #[test]
     fn strict_grammar_is_available_as_const() {
         assert!(STRICT_JSON_ENVELOPE_GBNF.contains("root ::= call | answer"));
+    }
+
+    /// `call` setzt das öffnende Anführungszeichen des Werkzeugnamens schon im Literal. Bringt `name`
+    /// eigene mit, entsteht `"tool":""list_dir""`, und die Antwort ist kein gültiges JSON mehr.
+    #[test]
+    fn strict_grammar_quotes_the_tool_name_exactly_once() {
+        let rule = |name: &str| {
+            STRICT_JSON_ENVELOPE_GBNF
+                .lines()
+                .find_map(|line| line.strip_prefix(&format!("{name} ::= ")))
+                .unwrap_or_else(|| panic!("Regel `{name}` fehlt"))
+        };
+        assert!(rule("call").contains(r#"\"tool\":\"" name "\",\"arguments\""#));
+        assert!(
+            !rule("name").contains('"'),
+            "`name` darf keine eigenen Anführungszeichen erzwingen: {}",
+            rule("name")
+        );
     }
 }

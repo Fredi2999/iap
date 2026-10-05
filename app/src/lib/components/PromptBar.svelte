@@ -39,6 +39,8 @@
     variant?: "chat" | "code";
     /** Bereits übersetzter Platzhaltertext; ohne Angabe gilt der Chat-Text. */
     placeholder?: string;
+    /** Kennung des Eingabefelds; sie muss je Fenster eindeutig sein (Code-Bereich hat zwei Leisten). */
+    inputId?: string;
   }
 
   let {
@@ -61,6 +63,7 @@
     onDictate,
     variant = "chat",
     placeholder,
+    inputId = "iap-prompt",
   }: Props = $props();
 
   // „/“-Menü wie in Claude Code: öffnet sich, solange nur „/wort“ in der Eingabe steht.
@@ -295,8 +298,8 @@
         {/each}
       </div>
     {/if}
-    <label class="sr-only" for="iap-prompt">{t("Nachricht an IAP")}</label>
-    <textarea id="iap-prompt" rows="1" bind:this={textareaEl} bind:value
+    <label class="sr-only" for={inputId}>{t("Nachricht an IAP")}</label>
+    <textarea id={inputId} rows={variant === "code" ? 2 : 1} bind:this={textareaEl} bind:value
       placeholder={placeholder ?? t(mode === "plan" ? "Vorhaben beschreiben oder mit OK bestätigen …" : "Nachricht an IAP …")}
       role="combobox" aria-autocomplete="list" aria-expanded={slashOpen} aria-controls="iap-slash-menu" aria-activedescendant={slashOpen ? "slash-" + slashIndex : undefined}
       oninput={resizeInput} onfocus={closeMenus} onkeydown={handleKeydown}></textarea>

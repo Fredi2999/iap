@@ -14,8 +14,8 @@ use std::sync::{
 
 use pa_code::agent::{agent_registry, AgentLimits, CommandGate, StagedStore};
 use pa_core::tool_loop::{
-    parse_envelope, run_tool_loop, ToolEvent, ToolLoopConfig, ToolLoopError, ToolStep,
-    TOOL_ENVELOPE_GBNF,
+    looks_like_envelope, parse_envelope, run_tool_loop, ToolEvent, ToolLoopConfig, ToolLoopError,
+    ToolStep, TOOL_ENVELOPE_GBNF,
 };
 use pa_launcher::vault_audit::VaultAuditSink;
 use pa_policy::{AuditSink, GrantStore, Mode, PathScope};
@@ -172,12 +172,18 @@ pub fn fit_history(messages: &[Message], budget_chars: usize) -> Vec<Message> {
     fitted
 }
 
+/// Hinweis, wenn das Modell einen Werkzeugaufruf liefert, der sich nicht lesen lässt. Die Oberfläche
+/// kennt den Wortlaut (`ENVELOPE_ERROR_TEXT`) und übersetzt ihn.
+const BROKEN_CALL_TEXT: &str = "Das Modell hat keinen gültigen Werkzeugaufruf geliefert. Versuche es noch einmal oder formuliere die Aufgabe anders.";
+
 /// Ersetzt eine unvollständige Antwort (Grenze der Arbeitsschritte erreicht: der letzte Text ist
-/// dann noch ein Werkzeugaufruf) durch einen verständlichen Hinweis.
+/// dann noch ein Werkzeugaufruf) durch einen verständlichen Hinweis. Ein kaputter Aufruf wird nie
+/// als Antwort angezeigt und gelangt so auch nicht in den Verlauf des nächsten Zugs.
 fn finalize_text(text: String) -> String {
     match parse_envelope(&text) {
         Ok(ToolStep::Answer(answer)) => answer,
         Ok(ToolStep::Call { .. }) => "Ich habe die Grenze der Arbeitsschritte für eine Anfrage erreicht. Was ich gefunden und vorgeschlagen habe, steht oben. Schreibe „weiter“, wenn ich fortfahren soll.".to_owned(),
+        Err(_) if looks_like_envelope(&text) => BROKEN_CALL_TEXT.to_owned(),
         Err(_) => text,
     }
 }
@@ -256,7 +262,7 @@ pub fn run_agent_turn(
     match result {
         Ok(text) => Ok(finalize_text(text)),
         // Das Modell hat frei geantwortet, statt die Hülle zu verwenden: Das ist die Antwort.
-        Err(ToolLoopError::Parse(_)) if !last_raw.trim().is_empty() => Ok(last_raw),
+        Err(ToolLoopError::Parse(_)) if !last_raw.trim().is_empty() => Ok(finalize_text(last_raw)),
         Err(error) => Err(error),
     }
 }
@@ -647,6 +653,23 @@ mod tests {
             vec!["Das ist eine freie Antwort.".to_owned()],
         );
         assert_eq!(result.unwrap(), "Das ist eine freie Antwort.");
+    }
+
+    /// Mit echtem llama-server beobachtet: Die Grammatik lieferte `"tool":""list_dir""`. Ein solcher
+    /// kaputter Aufruf darf nie als Antwort erscheinen (und nicht in den Verlauf des nächsten Zugs).
+    #[test]
+    fn a_broken_tool_call_is_reported_instead_of_shown_as_the_answer() {
+        let p = project();
+        let store = StagedStore::new();
+        let broken = r#"{"action":"call","tool":""list_dir"","arguments":{"path":"."}}"#;
+        let (result, events, _) = run(&p, &store, 4096, vec![broken.to_owned()]);
+        let text = result.unwrap();
+        assert_eq!(text, BROKEN_CALL_TEXT);
+        assert!(!text.contains("\"action\""), "{text}");
+        assert!(
+            events.is_empty(),
+            "es darf nichts ausgeführt worden sein: {events:?}"
+        );
     }
 
     #[test]

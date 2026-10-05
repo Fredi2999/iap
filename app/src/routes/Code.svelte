@@ -64,7 +64,7 @@
   // ---------------------------------------------------------------- Zustand
 
   let listingError = $state<unknown>(null);
-  let pane = $state<"files" | "search">("files");
+  let pane = $state<"files" | "search" | "agent">("files");
   /** Der Bereich arbeitet in einem freigegebenen Ordner auf dem PC (nicht im Stick-Arbeitsordner). */
   let isHost = $state(false);
 
@@ -88,6 +88,20 @@
   let diffError = $state<unknown>(null);
   let status = $state("");
   let pageError = $state<unknown>(null);
+  /** Der Vorschlag des Agenten, der zuletzt in den Editor geladen wurde, und ein Fehler dabei. */
+  let reviewed = $state<string | null>(null);
+  let reviewError = $state<unknown>(null);
+  let diffSection = $state<HTMLElement | null>(null);
+  let sidePane = $state<HTMLElement | null>(null);
+
+  /** Öffnet den Reiter „IAP“ und holt die Spalte ins Bild, damit die Eingabe unten nicht verdeckt bleibt. */
+  async function openAgentPane() {
+    pane = "agent";
+    await tick();
+    sidePane?.scrollIntoView({ block: "nearest" });
+  }
+  // Nur solange der Vorschlag noch offen ist, gilt er als „im Editor“.
+  const reviewing = $derived(agent.changes.some((change) => change.path === reviewed) ? reviewed : null);
 
   let closing = $state<string | null>(null);
   let creating = $state<{ directory: boolean; value: string } | null>(null);
@@ -160,6 +174,8 @@
     assistTarget = null;
     fileNote = "";
     pageError = null;
+    reviewed = null;
+    reviewError = null;
     snapshots = [];
     snapshotError = null;
     gitOk = false;
@@ -344,12 +360,12 @@
 
   /** Lädt einen Vorschlag des Agenten in den Editor; die Diff-Ansicht zeigt jede Änderung. */
   async function reviewChange(path: string) {
-    pageError = null;
+    reviewError = null;
     try {
       const change = await codeAgentChange(path);
       let entry = code.tabs.find((candidate) => candidate.path === path);
       if (entry && isDirty(entry)) {
-        pageError = t("Speichere oder verwirf zuerst die Änderungen an dieser Datei, bevor du den Vorschlag lädst.");
+        reviewError = t("Speichere oder verwirf zuerst die Änderungen an dieser Datei, bevor du den Vorschlag lädst.");
         return;
       }
       if (!entry) {
@@ -361,8 +377,11 @@
       await tick();
       replaceDoc(change.proposed);
       await refreshDiff();
+      reviewed = path;
+      await tick();
+      diffSection?.scrollIntoView({ block: "nearest" });
     } catch (reason) {
-      pageError = reason;
+      reviewError = reason;
     }
   }
 
@@ -759,11 +778,16 @@
 
   <CodeRootBar canSwitch={() => dirtyCount() === 0} onSwitched={resetForRoot} />
 
-  <div class="v-code">
-    <aside class="v-card v-code-files" aria-label={t("Dateien")}>
+  <div class="v-code" class:agent-open={pane === "agent"}>
+    <aside class="v-card v-code-files" aria-label={t("Dateien")} bind:this={sidePane}>
       <div class="v-segmented" role="tablist" aria-label={t("Ansicht")}>
         <button type="button" role="tab" aria-selected={pane === "files"} class:active={pane === "files"} onclick={() => (pane = "files")}>{t("Dateien")}</button>
         <button type="button" role="tab" aria-selected={pane === "search"} class:active={pane === "search"} onclick={showSearch}>{t("Suchen")}</button>
+        <button type="button" role="tab" aria-selected={pane === "agent"} class:active={pane === "agent"} onclick={openAgentPane}>
+          {t("IAP")}
+          {#if agent.running}<span class="v-code-pulse" role="img" aria-label={t("IAP arbeitet")}></span>
+          {:else if agent.changes.length > 0}<span class="v-code-badge" role="img" aria-label={t("Vorschläge ({n})", { n: agent.changes.length })}>{agent.changes.length}</span>{/if}
+        </button>
       </div>
 
       {#if pane === "files"}
@@ -803,7 +827,7 @@
             canDelete={!isHost}
           />
         {/if}
-      {:else}
+      {:else if pane === "search"}
         <form class="v-code-inline v-code-search" onsubmit={(event) => { event.preventDefault(); void runSearch(); }}>
                     <input use:focusOnMount type="search" bind:value={searchQuery} placeholder={t("In allen Dateien suchen")} aria-label={t("Suchbegriff")} />
           <button type="submit" class="v-btn v-btn-primary" disabled={searching || searchQuery.trim().length < 2}>{searching ? t("Suche …") : t("Suchen")}</button>
@@ -826,6 +850,52 @@
           </ul>
         {/if}
       {/if}
+
+      <div class="v-code-agent-pane" hidden={pane !== "agent"}>
+        <div class="v-segmented" role="group" aria-label={t("Wobei soll IAP helfen?")}>
+          <button type="button" class:active={assistHalf === "folder"} aria-pressed={assistHalf === "folder"} onclick={() => (assistMode = "folder")}>{t("Ganzer Ordner")}</button>
+          <button type="button" class:active={assistHalf === "file"} aria-pressed={assistHalf === "file"} disabled={!tab} title={tab ? undefined : t("Öffne zuerst eine Datei.")} onclick={() => (assistMode = "file")}>{t("Diese Datei")}</button>
+        </div>
+
+        <div class="v-code-agent-half" hidden={assistHalf !== "folder"}>
+          <CodeAgent activeFile={tab?.path ?? null} onReview={reviewChange} {reviewing} {reviewError} onDismissReviewError={() => (reviewError = null)} locked={assistBusy} {settings} {onSettingsChanged} {onOpenSettings} onError={(reason) => (pageError = reason)} />
+        </div>
+
+        {#if tab}
+          <div class="v-stack v-code-agent-half" hidden={assistHalf !== "file"}>
+            <div class="v-row">
+              <span class="v-chip" title={t("Ohne Markierung bekommt IAP die ganze Datei, mit Markierung nur den Abschnitt.")}>{scopeLabel()}</span>
+            </div>
+            <div class="v-code-quick" role="group" aria-label={t("Schnellaufgaben")}>
+              {#each QUICK as quick (quick.label)}
+                <button type="button" class="v-chip v-code-chip" disabled={assistBusy} onclick={() => (instruction = quick.text)}>{t(quick.label)}</button>
+              {/each}
+            </div>
+            <CodePromptBar inputId="iap-code-file-prompt" bind:value={instruction} busy={assistBusy} locked={agent.running} placeholder={t("Was soll IAP tun? Z. B. Prüfung auf leere Eingaben ergänzen.")}
+              {settings} {onSettingsChanged} {onOpenSettings} onSend={askAssistant} onStop={cancelAssistant} onError={(reason) => (pageError = reason)} />
+            <div class="v-row v-row-between">
+              {#if assistBusy}
+                <span class="v-help v-num" role="status">{t("IAP schreibt … {n} Zeichen", { n: assistChars })}</span>
+              {/if}
+            </div>
+            {#if assistError}<ErrorNotice error={assistError} onDismiss={() => (assistError = null)} />{/if}
+            {#if assistReply}
+              <div class="v-code-reply" role="status">
+                {#if assistReply.explanation}<p class="v-card-text">{assistReply.explanation}</p>{/if}
+                {#if replyChangesNothing}
+                  <p class="v-help">{t("IAP schlägt keine Änderung am Code vor.")}</p>
+                {:else if assistLoaded}
+                  <p data-hint class="v-help">{t("Vorschlag im Editor. Rückgängig mit Strg+Z.")}</p>
+                {:else}
+                  <div class="v-row">
+                    <button type="button" class="v-btn v-btn-primary" onclick={loadReply}>{t("Vorschlag im Editor ansehen")}</button>
+                  </div>
+                {/if}
+              </div>
+            {/if}
+          </div>
+        {/if}
+      </div>
     </aside>
 
     <div class="v-stack v-code-main">
@@ -892,62 +962,10 @@
         {/if}
       </section>
 
-      <!-- Eine Karte für beide Assistenten: Ordner (Agent liest und sucht selbst) oder diese Datei
-           (IAP fragen). Beide bleiben im Speicher, nur die andere Hälfte ist ausgeblendet, damit
-           ein angefangener Auftrag beim Umschalten nicht verloren geht. -->
-      <section class="v-card v-stack v-code-assist" aria-label={t("IAP")}>
-        <div class="v-card-title">
-          <span>{t("IAP")}</span>
-          <div class="v-segmented" role="group" aria-label={t("Wobei soll IAP helfen?")}>
-            <button type="button" class:active={assistHalf === "folder"} aria-pressed={assistHalf === "folder"} onclick={() => (assistMode = "folder")}>{t("Ganzer Ordner")}</button>
-            <button type="button" class:active={assistHalf === "file"} aria-pressed={assistHalf === "file"} disabled={!tab} onclick={() => (assistMode = "file")}>{t("Diese Datei")}</button>
-          </div>
-        </div>
-
-        <div hidden={assistHalf !== "folder"}>
-          <CodeAgent embedded activeFile={tab?.path ?? null} onReview={reviewChange} locked={assistBusy} {settings} {onSettingsChanged} {onOpenSettings} onError={(reason) => (pageError = reason)} />
-        </div>
-
-        {#if tab}
-          <div class="v-stack" hidden={assistHalf !== "file"}>
-            <div class="v-row">
-              <span class="v-chip" title={t("Ohne Markierung bekommt IAP die ganze Datei, mit Markierung nur den Abschnitt.")}>{scopeLabel()}</span>
-            </div>
-            <div class="v-code-quick" role="group" aria-label={t("Schnellaufgaben")}>
-              {#each QUICK as quick (quick.label)}
-                <button type="button" class="v-chip v-code-chip" disabled={assistBusy} onclick={() => (instruction = quick.text)}>{t(quick.label)}</button>
-              {/each}
-            </div>
-            <CodePromptBar bind:value={instruction} busy={assistBusy} locked={agent.running} placeholder={t("Was soll IAP tun? Z. B. Prüfung auf leere Eingaben ergänzen.")}
-              {settings} {onSettingsChanged} {onOpenSettings} onSend={askAssistant} onStop={cancelAssistant} onError={(reason) => (pageError = reason)} />
-            <div class="v-row v-row-between">
-              {#if assistBusy}
-                <span class="v-help v-num" role="status">{t("IAP schreibt … {n} Zeichen", { n: assistChars })}</span>
-              {/if}
-            </div>
-            {#if assistError}<ErrorNotice error={assistError} onDismiss={() => (assistError = null)} />{/if}
-            {#if assistReply}
-              <div class="v-code-reply" role="status">
-                {#if assistReply.explanation}<p class="v-card-text">{assistReply.explanation}</p>{/if}
-                {#if replyChangesNothing}
-                  <p class="v-help">{t("IAP schlägt keine Änderung am Code vor.")}</p>
-                {:else if assistLoaded}
-                  <p data-hint class="v-help">{t("Vorschlag im Editor. Rückgängig mit Strg+Z.")}</p>
-                {:else}
-                  <div class="v-row">
-                    <button type="button" class="v-btn v-btn-primary" onclick={loadReply}>{t("Vorschlag im Editor ansehen")}</button>
-                  </div>
-                {/if}
-              </div>
-            {/if}
-          </div>
-        {/if}
-      </section>
-
       {#if diffError}<ErrorNotice error={diffError} onDismiss={() => (diffError = null)} />{/if}
 
       {#if diff && diffPath === code.active}
-        <section class="v-card v-stack" aria-label={t("Änderungen")}>
+        <section class="v-card v-stack" aria-label={t("Änderungen")} bind:this={diffSection}>
           <div class="v-card-title">
             <span>{t("Änderungen")} <small>{diff.hunks.length === 1 ? t("1 Block") : t("{n} Blöcke", { n: diff.hunks.length })}</small></span>
             <span class="v-row">
@@ -1020,9 +1038,24 @@
 
 <style>
   .v-code { display: grid; grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr); gap: var(--v-space-4); align-items: start; }
-  @media (max-width: 900px) { .v-code { grid-template-columns: minmax(0, 1fr); } }
-  .v-code-files { padding: var(--v-space-3); display: grid; gap: var(--v-space-2); position: sticky; top: 0; max-height: calc(100dvh - 10rem); overflow-y: auto; min-width: 0; }
+  .v-code.agent-open { grid-template-columns: minmax(18rem, 25rem) minmax(0, 1fr); }
+  @media (max-width: 900px) { .v-code, .v-code.agent-open { grid-template-columns: minmax(0, 1fr); } }
+  .v-code-files { padding: var(--v-space-3); display: grid; align-content: start; gap: var(--v-space-2); position: sticky; top: 0; max-height: calc(100dvh - 10rem); overflow-y: auto; min-width: 0; }
   @media (max-width: 900px) { .v-code-files { position: static; max-height: 22rem; } }
+  /* Reiter „IAP“: Die Spalte hat feste Höhe, damit nur der Verlauf scrollt und Vorschläge und Eingabe sichtbar bleiben. */
+  .v-code.agent-open .v-code-files { height: calc(100dvh - 12rem); min-height: 28rem; grid-template-rows: auto minmax(0, 1fr); }
+  @media (max-width: 900px) { .v-code.agent-open .v-code-files { height: auto; max-height: none; } }
+  .v-code-agent-pane { display: flex; flex-direction: column; gap: var(--v-space-3); min-height: 0; }
+  .v-code-agent-pane[hidden], .v-code-agent-half[hidden] { display: none; }
+  .v-code-agent-pane > .v-segmented { align-self: flex-start; }
+  .v-code-agent-half { min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
+  .v-code-agent-half > :global(.v-agent) { flex: 1 1 auto; }
+  .v-code-agent-pane :global(.v-agent-log) { flex: 1 1 auto; }
+  @media (max-width: 900px) { .v-code-agent-pane :global(.v-agent-log) { max-height: 20rem; } }
+  .v-code-pulse { display: inline-block; width: 7px; height: 7px; margin-left: var(--v-space-2); border-radius: 9999px; background: var(--v-accent-blue); animation: v-code-pulse 1.4s ease-in-out infinite; }
+  @keyframes v-code-pulse { 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .v-code-pulse { animation: none; } }
+  .v-code-badge { display: inline-block; min-width: 1.1rem; margin-left: var(--v-space-2); padding: 0 .3rem; border-radius: 9999px; background: var(--v-accent-blue-soft); color: var(--v-text-primary); font-size: var(--v-text-xs); line-height: 1.1rem; text-align: center; }
   .v-code-tools { display: flex; flex-wrap: wrap; gap: var(--v-space-1); }
   .v-code-inline { display: flex; flex-wrap: wrap; gap: var(--v-space-2); align-items: center; }
   .v-code-inline input { flex: 1 1 8rem; min-width: 0; }

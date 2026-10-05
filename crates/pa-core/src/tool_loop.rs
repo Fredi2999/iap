@@ -120,7 +120,7 @@ pub const TOOL_ENVELOPE_GBNF: &str = r#"
 root ::= call | answer
 call ::= "{\"action\":\"call\",\"tool\":\"" name "\",\"arguments\":" value "}"
 answer ::= "{\"action\":\"answer\",\"text\":" string "}"
-name ::= "\"" [a-zA-Z_][a-zA-Z0-9_]* "\""
+name ::= [a-zA-Z_][a-zA-Z0-9_]*
 value ::= object | array | string | number | "true" | "false" | "null"
 object ::= "{" (string ":" value ("," string ":" value)*)? "}"
 array ::= "[" (value ("," value)*)? "]"
@@ -177,6 +177,15 @@ pub fn parse_envelope(text: &str) -> Result<ToolStep, ToolLoopError> {
         }
         other => Err(ToolLoopError::Parse(format!("unbekannte action `{other}`"))),
     }
+}
+
+/// Sieht `text` wie ein Werkzeugaufruf des Modells aus (ein JSON-Objekt mit `"action"`)?
+///
+/// Warum: Ein Aufruf, der sich nicht parsen lässt, darf dem Nutzer nicht als Antwort erscheinen
+/// und nicht in den Verlauf des nächsten Zugs gelangen; der Aufrufer ersetzt ihn durch einen Hinweis.
+pub fn looks_like_envelope(text: &str) -> bool {
+    let trimmed = text.trim();
+    trimmed.starts_with('{') && trimmed.contains("\"action\"")
 }
 
 fn extract_json_candidate(text: &str) -> Option<String> {
@@ -424,6 +433,37 @@ mod tests {
         let text = "Nachdenklich ... {\"action\":\"answer\",\"text\":\"gefunden\"} noch mehr Text";
         let step = parse_envelope(text).unwrap();
         assert_eq!(step, ToolStep::Answer("gefunden".into()));
+    }
+
+    /// Der Anfang von `call` enthält das öffnende Anführungszeichen des Werkzeugnamens schon im
+    /// Literal. Bringt `name` eigene mit, entsteht `"tool":""list_dir""` (kein gültiges JSON), und
+    /// der Code-Agent führt keinen Aufruf aus. Mit echtem llama-server und Gemma 4 E2B beobachtet.
+    #[test]
+    fn grammar_quotes_the_tool_name_exactly_once() {
+        let rule = |name: &str| {
+            TOOL_ENVELOPE_GBNF
+                .lines()
+                .find_map(|line| line.strip_prefix(&format!("{name} ::= ")))
+                .unwrap_or_else(|| panic!("Regel `{name}` fehlt"))
+        };
+        assert!(
+            rule("call").contains(r#"\"tool\":\"" name "\",\"arguments\""#),
+            "die Regel `call` muss den Namen in Anführungszeichen setzen"
+        );
+        assert!(
+            !rule("name").contains('"'),
+            "`name` darf keine eigenen Anführungszeichen erzwingen: {}",
+            rule("name")
+        );
+    }
+
+    #[test]
+    fn a_broken_call_still_looks_like_an_envelope_but_prose_does_not() {
+        let broken = r#"{"action":"call","tool":""list_dir"","arguments":{"path":"."}}"#;
+        assert!(parse_envelope(broken).is_err());
+        assert!(looks_like_envelope(broken));
+        assert!(!looks_like_envelope("Ich habe die Datei gelesen."));
+        assert!(!looks_like_envelope(r#"{"name":"kein Aufruf"}"#));
     }
 
     #[test]

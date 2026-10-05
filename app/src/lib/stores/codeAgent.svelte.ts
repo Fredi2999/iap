@@ -5,14 +5,10 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 
 import { errorText } from "../errors";
 import { codeAgentChanges, codeAgentCommandRespond, codeAgentDiscard, codeAgentReset, codeAgentSend, onCodeAgentCommand, onCodeAgentEvent } from "../ipc";
+import type { AgentLine } from "../agentSteps";
 import type { AgentChange, AgentEvent, CommandPrompt } from "../types";
 
-export interface AgentLine {
-  kind: "user" | "step" | "answer" | "error";
-  text: string;
-  /** Kurze Vorschau des Ergebnisses eines Schritts. */
-  detail?: string;
-}
+export type { AgentLine };
 
 export const agent = $state<{
   lines: AgentLine[];
@@ -40,7 +36,7 @@ function handle(event: AgentEvent): void {
       agent.step = event.step;
       break;
     case "tool_call":
-      agent.lines.push({ kind: "step", text: `${event.tool} ${event.arguments}` });
+      agent.lines.push({ kind: "step", text: `${event.tool} ${event.arguments}`, tool: event.tool, args: event.arguments });
       break;
     case "tool_result": {
       const last = agent.lines[agent.lines.length - 1];
@@ -112,6 +108,15 @@ export async function resetAgent(): Promise<void> {
 export async function discardChange(path: string): Promise<void> {
   try {
     await codeAgentDiscard(path);
+  } finally {
+    await refreshChanges();
+  }
+}
+
+/** Verwirft alle offenen Vorschläge auf einmal; der Verlauf bleibt stehen. */
+export async function discardAllChanges(): Promise<void> {
+  try {
+    await codeAgentDiscard(null);
   } finally {
     await refreshChanges();
   }
