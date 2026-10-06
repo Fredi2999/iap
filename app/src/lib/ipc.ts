@@ -1037,8 +1037,9 @@ export function codeRootRevoke(path: string): Promise<CodeRootsStatus> {
 // Code-Agent: das Modell arbeitet im Projektordner und schlägt Änderungen vor
 // ---------------------------------------------------------------------------
 
-export function codeAgentSend(text: string, activeFile: string | null): Promise<void> {
-  return invoke("code_agent_send", { text, activeFile });
+/** `skillId`: ein mit „/name“ gewählter Anleitungs-Skill, der nur für diese Anfrage gilt. */
+export function codeAgentSend(text: string, activeFile: string | null, skillId: string | null = null): Promise<void> {
+  return invoke("code_agent_send", { text, activeFile, skillId });
 }
 
 export function codeAgentCancel(): Promise<void> {

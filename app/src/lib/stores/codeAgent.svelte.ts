@@ -73,12 +73,13 @@ export function ensureAgentListener(): void {
   void refreshChanges();
 }
 
-export async function sendToAgent(text: string, activeFile: string | null): Promise<void> {
-  agent.lines.push({ kind: "user", text });
+/** `display` ist der Text, wie getippt (mit „/skill“); `text` geht an den Agenten, `skillId` als eigenes Feld. */
+export async function sendToAgent(text: string, activeFile: string | null, skillId: string | null = null, display: string = text): Promise<void> {
+  agent.lines.push({ kind: "user", text: display });
   agent.running = true;
   agent.step = 0;
   try {
-    await codeAgentSend(text, activeFile);
+    await codeAgentSend(text, activeFile, skillId);
   } catch (reason) {
     agent.running = false;
     agent.lines.push({ kind: "error", text: errorText(reason) });

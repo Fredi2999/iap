@@ -42,6 +42,8 @@ const HIDDEN: [&str; 6] = [
 const SEARCH_SKIP: [&str; 4] = ["node_modules", "target", "dist", "build"];
 /// Größte Datei, die gelesen oder vorgeschlagen wird.
 const MAX_FILE_BYTES: u64 = 1024 * 1024;
+/// So viel von einer Datei geht in eine Fehlermeldung von `propose_edit` zurück an das Modell.
+const ERROR_EXCERPT_CHARS: usize = 3_000;
 const MAX_SEARCH_FILES: usize = 5_000;
 const MAX_SEARCH_BYTES: u64 = 512 * 1024;
 
@@ -172,6 +174,46 @@ fn answer(invocation: &ToolInvocation, text: impl Into<String>, untrusted: bool)
 
 fn problem(invocation: &ToolInvocation, text: impl std::fmt::Display) -> ToolOutput {
     answer(invocation, format!("FEHLER: {text}"), false)
+}
+
+/// Der Anfang einer Datei für eine Fehlermeldung, mit Hinweis, wenn er gekürzt ist.
+fn excerpt(text: &str) -> String {
+    let head: String = text.chars().take(ERROR_EXCERPT_CHARS).collect();
+    if text.chars().count() > ERROR_EXCERPT_CHARS {
+        format!("{head}\n[… gekürzt; lies mit read_file den Rest]")
+    } else {
+        head
+    }
+}
+
+/// Ob `new` plausibel die ganze Datei ersetzen soll: Es behält fast alle bisherigen Zeilen (höchstens
+/// eine oder 10 % fehlen) und enthält keine Auslassung. Ein Bruchstück ohne `old` würde den Rest der
+/// Datei löschen; erfundener Inhalt (das Modell hat die Datei nie gelesen) behält sie nicht.
+fn plausibly_whole_file(current: &str, new: &str) -> bool {
+    let kept: std::collections::HashSet<&str> = new.lines().map(str::trim).collect();
+    let existing: Vec<&str> = current
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .collect();
+    let missing = existing
+        .iter()
+        .filter(|line| !kept.contains(**line))
+        .count();
+    missing <= (existing.len() / 10).max(1) && !has_elision_placeholder(new)
+}
+
+/// Enthält der Text eine Auslassung wie `// ...` oder `...`? Kleine Modelle kürzen so, wenn sie eine
+/// Datei „vollständig“ ausgeben sollen; als ganze Datei würde das echten Code durch den Platzhalter ersetzen.
+fn has_elision_placeholder(text: &str) -> bool {
+    text.lines().any(|line| {
+        let core = line
+            .trim()
+            .trim_start_matches(['/', '#', '*', '-', ' '])
+            .trim_end_matches(['/', '*', ' '])
+            .to_lowercase();
+        core == "..." || core == "…" || core.starts_with("rest ") || core.starts_with("remaining ")
+    })
 }
 
 fn string_arg(invocation: &ToolInvocation, key: &str) -> Option<String> {
@@ -609,12 +651,26 @@ impl Tool for ProposeEditTool {
             .get(&shown)
             .map(|c| c.proposed)
             .or_else(|| on_disk.clone());
+        // Nur `new`, ohne `old`: Gemessen schickt Gemma 4 E2B das oft und meint damit den ganzen neuen
+        // Dateiinhalt. Solange das plausibel die ganze Datei ist, gilt es als `content`; der Unterschied
+        // bleibt sichtbar, und übernommen wird erst nach der Bestätigung.
+        let new_without_old = match (string_arg(invocation, "old"), string_arg(invocation, "new")) {
+            (None, Some(new)) => Some(new),
+            _ => None,
+        };
+        let whole_file_text = new_without_old.as_deref().filter(|new| {
+            base.as_deref()
+                .is_some_and(|text| plausibly_whole_file(text, new))
+        });
+        let read_as_whole_file = whole_file_text.is_some();
         let proposed = if let Some(content) = string_arg(invocation, "content") {
             lf(&content)
+        } else if let Some(new) = whole_file_text {
+            lf(new)
         } else if let (Some(old), Some(new)) =
             (string_arg(invocation, "old"), string_arg(invocation, "new"))
         {
-            let Some(base) = base else {
+            let Some(base) = base.as_deref() else {
                 return Ok(problem(
                     invocation,
                     "Die Datei gibt es nicht. Für eine neue Datei nimm `content`.",
@@ -626,10 +682,15 @@ impl Tool for ProposeEditTool {
             }
             match base.matches(&old).count() {
                 0 => {
+                    // Erste Zeile: der kurze Grund (die Oberfläche zeigt sie dem Nutzer); danach das,
+                    // was das Modell zum Korrigieren braucht.
                     return Ok(problem(
                         invocation,
-                        "`old` steht nicht im Text. Lies die Datei mit read_file und kopiere die Stelle exakt, einschließlich Einrückung.",
-                    ))
+                        format!(
+                            "`old` steht nicht im Text.\nKopiere die Stelle exakt, einschließlich Einrückung, aus dem aktuellen Inhalt von {shown}:\n{}",
+                            excerpt(base)
+                        ),
+                    ));
                 }
                 1 => base.replacen(&old, &lf(&new), 1),
                 n => {
@@ -640,13 +701,36 @@ impl Tool for ProposeEditTool {
                 }
             }
         } else {
+            // Kleine Modelle lassen `old` oft weg oder raten es. Die Meldung sagt deshalb genau, was zu
+            // senden ist, und zeigt die Datei, damit der nächste Versuch gelingt.
+            // Das Beispiel nimmt eine echte Zeile aus der Datei: So sieht das Modell, wie `old` aussehen
+            // muss (gemessen: Gemma 4 E2B schickte sonst wiederholt nur `new`).
+            let example_old = base
+                .as_deref()
+                .and_then(|text| text.lines().map(str::trim).find(|line| !line.is_empty()))
+                .map_or_else(
+                    || "x = 1".to_owned(),
+                    |line| line.chars().take(60).collect::<String>().replace('"', "'"),
+                );
+            let current = base.as_deref().map_or_else(String::new, |text| {
+                format!("\nAktueller Inhalt von {shown}:\n{}", excerpt(text))
+            });
             return Ok(problem(
                 invocation,
-                "Gib entweder `old` und `new` oder `content` an.",
+                format!(
+                    "`old` fehlt oder `new` fehlt.\nErsetze eine Stelle so: {{\"path\":\"{shown}\",\"old\":\"{example_old}\",\"new\":\"neuer Text\"}}. `old` ist die Stelle, die ersetzt wird, exakt aus der Datei kopiert; `new` ist ihr neuer Text. Willst du eine Zeile davor einfügen, wiederhole die Zeile in `new`. Für den ganzen neuen Dateiinhalt nimm `content`. Lies die Datei vorher mit read_file.{current}"
+                ),
             ));
         };
         if proposed.len() as u64 > MAX_FILE_BYTES {
             return Ok(problem(invocation, "Der Vorschlag ist größer als 1 MB."));
+        }
+        // Ein Vorschlag ohne Wirkung wäre ein leerer Eintrag in der Liste der Nutzerin oder des Nutzers.
+        if base.as_deref() == Some(proposed.as_str()) {
+            return Ok(problem(
+                invocation,
+                format!("Der Vorschlag ändert nichts.\n{shown} enthält genau diesen Text schon. Ändere etwas an der Stelle, die die Aufgabe nennt."),
+            ));
         }
         let change = StagedChange {
             path: shown.clone(),
@@ -663,10 +747,15 @@ impl Tool for ProposeEditTool {
         }
         .line_counts();
         self.store.put(change);
+        let reading = if read_as_whole_file {
+            " (`new` ohne `old` wurde als ganzer neuer Dateiinhalt gelesen)"
+        } else {
+            ""
+        };
         Ok(answer(
             invocation,
             format!(
-                "Vorschlag für {shown} gemerkt (+{added} −{removed} Zeilen gegenüber der Datei). Geschrieben ist noch nichts: Die Nutzerin oder der Nutzer prüft ihn und übernimmt ihn selbst."
+                "Vorschlag für {shown} gemerkt (+{added} −{removed} Zeilen gegenüber der Datei){reading}. Geschrieben ist noch nichts: Die Nutzerin oder der Nutzer prüft ihn und übernimmt ihn selbst."
             ),
             false,
         ))
@@ -989,6 +1078,127 @@ mod tests {
             DerivationSource::UserIntent,
         );
         assert!(missing.contains("steht nicht im Text"), "{missing}");
+        // Das Modell bekommt die Datei zurück, damit es `old` exakt abschreiben kann (kleine Modelle
+        // raten sonst und geben auf).
+        assert!(missing.contains("x = 1\nx = 1"), "{missing}");
+        assert!(fx.store.list().is_empty());
+    }
+
+    /// Mit echtem Modell beobachtet: Gemma ließ `old` weg oder riet es, bekam nur „FEHLER“ und
+    /// behauptete danach trotzdem, einen Vorschlag gemacht zu haben.
+    #[test]
+    fn an_incomplete_edit_explains_what_to_send_and_shows_the_file() {
+        let mut fx = fixture();
+        std::fs::write(fx.root().join("a.txt"), "x = 1\ny = 2\nz = 3\n").unwrap();
+        // Ein Bruchstück ohne `old` kann nicht als ganze Datei gelten (es würde den Rest löschen).
+        let only_new = fx.call(
+            "propose_edit",
+            json!({"path": "a.txt", "new": "x = 2"}),
+            DerivationSource::UserIntent,
+        );
+        assert!(only_new.starts_with("FEHLER:"), "{only_new}");
+        for hint in ["old", "new", "read_file", "x = 1"] {
+            assert!(only_new.contains(hint), "'{hint}' fehlt: {only_new}");
+        }
+        // Erste Zeile = kurzer Grund (der Nutzer sieht sie); das Beispiel nutzt eine echte Zeile.
+        let reason = only_new.lines().next().unwrap_or("");
+        assert!(reason.len() < 60, "{reason}");
+        assert!(only_new.contains(r#""old":"x = 1""#), "{only_new}");
+        assert!(fx.store.list().is_empty());
+    }
+
+    /// Mit echtem Gemma beobachtet: Das Modell schickt oft nur `new`, und zwar den ganzen neuen
+    /// Dateiinhalt. Das gilt als `content`, solange es plausibel die ganze Datei ist; der Unterschied
+    /// bleibt sichtbar und bestätigt wird weiterhin von der Nutzerin oder dem Nutzer.
+    #[test]
+    fn new_without_old_counts_as_the_whole_file_when_it_plausibly_is_one() {
+        let mut fx = fixture();
+        std::fs::write(fx.root().join("a.txt"), "x = 1\ny = 2\nz = 3\n").unwrap();
+        let out = fx.call(
+            "propose_edit",
+            json!({"path": "a.txt", "new": "# Notiz\nx = 1\ny = 2\nz = 3\n"}),
+            DerivationSource::UserIntent,
+        );
+        assert!(out.contains("gemerkt"), "{out}");
+        assert!(
+            out.contains("ganzer"),
+            "der Hinweis auf die Deutung fehlt: {out}"
+        );
+        let staged = fx.store.get("a.txt").unwrap();
+        assert_eq!(staged.proposed, "# Notiz\nx = 1\ny = 2\nz = 3\n");
+        assert_eq!(
+            std::fs::read_to_string(fx.root().join("a.txt")).unwrap(),
+            "x = 1\ny = 2\nz = 3\n"
+        );
+    }
+
+    /// Mit echtem Gemma beobachtet: Als „ganze Datei“ kam `fn main() {\n    // ...\n}` – die echte Zeile
+    /// war durch einen Platzhalter ersetzt. Das darf nie als Vorschlag in der Liste landen.
+    #[test]
+    fn new_without_old_with_an_elision_placeholder_is_not_taken_as_the_whole_file() {
+        let mut fx = fixture();
+        std::fs::write(fx.root().join("a.txt"), "fn main() {\n    let a = 1;\n}\n").unwrap();
+        for placeholder in [
+            "    // ...",
+            "    ...",
+            "    # ...",
+            "    /* ... */",
+            "    // rest unchanged",
+        ] {
+            let out = fx.call(
+                "propose_edit",
+                json!({"path": "a.txt", "new": format!("// Kommentar\nfn main() {{\n{placeholder}\n}}\n")}),
+                DerivationSource::UserIntent,
+            );
+            assert!(out.starts_with("FEHLER:"), "{placeholder}: {out}");
+        }
+        assert!(fx.store.list().is_empty());
+    }
+
+    /// Mit echtem Gemma beobachtet: Das Modell hatte die Datei nie gelesen und erfand den Inhalt.
+    /// Eine echte Gesamtdatei behält fast alle bisherigen Zeilen; sonst kein Vorschlag.
+    #[test]
+    fn a_whole_file_that_drops_most_existing_lines_is_not_accepted_but_one_changed_line_is() {
+        let mut fx = fixture();
+        let original: String = (1..=10).map(|n| format!("zeile {n}\n")).collect();
+        std::fs::write(fx.root().join("a.txt"), &original).unwrap();
+
+        let invented = fx.call(
+            "propose_edit",
+            json!({"path": "a.txt", "new": "// erfunden\nfn main() {}\nprintln!(\"x\");\n"}),
+            DerivationSource::UserIntent,
+        );
+        assert!(invented.starts_with("FEHLER:"), "{invented}");
+        assert!(fx.store.list().is_empty());
+
+        let one_changed = original.replace("zeile 4", "zeile vier");
+        let ok = fx.call(
+            "propose_edit",
+            json!({"path": "a.txt", "new": one_changed}),
+            DerivationSource::UserIntent,
+        );
+        assert!(ok.contains("gemerkt") && ok.contains("+1 −1"), "{ok}");
+    }
+
+    #[test]
+    fn a_proposal_that_changes_nothing_is_refused() {
+        let mut fx = fixture();
+        std::fs::write(fx.root().join("a.txt"), "x = 1\ny = 2\n").unwrap();
+        let same = fx.call(
+            "propose_edit",
+            json!({"path": "a.txt", "old": "x = 1", "new": "x = 1"}),
+            DerivationSource::UserIntent,
+        );
+        assert!(
+            same.starts_with("FEHLER:") && same.contains("ändert nichts"),
+            "{same}"
+        );
+        let same_whole = fx.call(
+            "propose_edit",
+            json!({"path": "a.txt", "content": "x = 1\ny = 2\n"}),
+            DerivationSource::UserIntent,
+        );
+        assert!(same_whole.contains("ändert nichts"), "{same_whole}");
         assert!(fx.store.list().is_empty());
     }
 

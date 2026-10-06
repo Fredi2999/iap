@@ -226,10 +226,10 @@
 
 <div bind:this={rootEl} class="prompt-bar" data-variant={variant} data-max={thinking === "maximal" ? "" : undefined}>
   {#if slashOpen}
-    <div id="iap-slash-menu" class="prompt-popup prompt-slash-menu" role="listbox" aria-label={t("Befehle, Vorlagen und Skills")}>
+    <div id={inputId + "-slash-menu"} class="prompt-popup prompt-slash-menu" role="listbox" aria-label={t("Befehle, Vorlagen und Skills")}>
       {#each slashMatches as item, index (item.id)}
         {#if index === 0 || slashMatches[index - 1].group !== item.group}<strong>{t(SLASH_GROUPS.find((group) => group.id === item.group)?.label ?? "")}</strong>{/if}
-        <button type="button" id={"slash-" + index} role="option" aria-selected={index === slashIndex} class:selected={index === slashIndex}
+        <button type="button" id={inputId + "-slash-" + index} role="option" aria-selected={index === slashIndex} class:selected={index === slashIndex}
           onpointerenter={() => (slashIndex = index)} onclick={() => chooseSlash(item)}>
           <span class="prompt-slash-name">{item.name}</span><small>{item.description}</small>
         </button>
@@ -301,7 +301,7 @@
     <label class="sr-only" for={inputId}>{t("Nachricht an IAP")}</label>
     <textarea id={inputId} rows={variant === "code" ? 2 : 1} bind:this={textareaEl} bind:value
       placeholder={placeholder ?? t(mode === "plan" ? "Vorhaben beschreiben oder mit OK bestätigen …" : "Nachricht an IAP …")}
-      role="combobox" aria-autocomplete="list" aria-expanded={slashOpen} aria-controls="iap-slash-menu" aria-activedescendant={slashOpen ? "slash-" + slashIndex : undefined}
+      role="combobox" aria-autocomplete="list" aria-expanded={slashOpen} aria-controls={inputId + "-slash-menu"} aria-activedescendant={slashOpen ? inputId + "-slash-" + slashIndex : undefined}
       oninput={resizeInput} onfocus={closeMenus} onkeydown={handleKeydown}></textarea>
 
     <div class="prompt-controls">

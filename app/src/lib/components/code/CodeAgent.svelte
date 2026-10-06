@@ -5,9 +5,10 @@
   import { onMount, tick } from "svelte";
   import { groupAgentLines, splitPath, stepLabel, stepTarget } from "../../agentSteps";
   import { t, tk } from "../../i18n/index.svelte";
-  import { codeAgentCancel } from "../../ipc";
+  import { codeAgentCancel, listInstalledSkills } from "../../ipc";
+  import { codeSkillItems, parseSkillRequest } from "../../skillRequest";
   import { agent, answerCommand, discardAllChanges, discardChange, ensureAgentListener, resetAgent, sendToAgent } from "../../stores/codeAgent.svelte";
-  import type { SettingsSnapshot } from "../../types";
+  import type { InstalledSkillView, SettingsSnapshot } from "../../types";
   import ErrorNotice from "../ErrorNotice.svelte";
   import CodePromptBar from "./CodePromptBar.svelte";
   import CommandConfirm from "./CommandConfirm.svelte";
@@ -49,7 +50,14 @@
   const blocks = $derived(groupAgentLines(agent.lines, agent.running));
   const hasHistory = $derived(agent.lines.length > 0 || agent.changes.length > 0);
 
-  onMount(ensureAgentListener);
+  // Installierte Skills für das „/“-Menü; im Code-Bereich gelten nur Anleitungen.
+  let skills = $state<InstalledSkillView[]>([]);
+  const slashItems = $derived(codeSkillItems(skills));
+
+  onMount(() => {
+    ensureAgentListener();
+    void listInstalledSkills().then((list) => { skills = list; }).catch((reason) => onError?.(reason));
+  });
 
   // Neue Zeilen sichtbar halten.
   $effect(() => {
@@ -62,7 +70,10 @@
     const value = text.trim();
     if (!value || agent.running) return;
     text = "";
-    await sendToAgent(value, activeFile);
+    // „/skill Auftrag“: Der Skill wirkt nur auf diese Anfrage und reist als eigenes Feld mit.
+    const request = parseSkillRequest(value, skills);
+    if (request) await sendToAgent(request.rest, activeFile, request.id, value);
+    else await sendToAgent(value, activeFile);
   }
 
   function stepCount(count: number): string {
@@ -149,7 +160,7 @@
 
   {#if reviewError}<ErrorNotice error={reviewError} onDismiss={onDismissReviewError} />{/if}
 
-  <CodePromptBar inputId="iap-code-agent-prompt" bind:value={text} busy={agent.running} {locked} placeholder={t("Aufgabe für den Ordner, z. B. Prüfung auf leere Werte ergänzen.")}
+  <CodePromptBar inputId="iap-code-agent-prompt" {slashItems} onSlash={(item) => (text = item.name + " ")} bind:value={text} busy={agent.running} {locked} placeholder={t("Aufgabe für den Ordner, z. B. Prüfung auf leere Werte ergänzen.")}
     {settings} {onSettingsChanged} {onOpenSettings} onSend={send} onStop={() => void codeAgentCancel()} {onError} />
 </div>
 

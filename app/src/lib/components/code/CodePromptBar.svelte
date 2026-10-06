@@ -2,7 +2,7 @@
   // Dieselbe Eingabeleiste wie im Chat, nur ohne die Chat-Schalter (Modus, Werkzeuge, Denkstufe).
   // Die Modellwahl wirkt auf das aktive Modell der ganzen App.
   import { onMount } from "svelte";
-  import PromptBar from "../PromptBar.svelte";
+  import PromptBar, { type SlashItem } from "../PromptBar.svelte";
   import { codeModels, loadCodeModels, switchCodeModel } from "../../stores/codeModels.svelte";
   import type { SettingsSnapshot } from "../../types";
 
@@ -22,9 +22,12 @@
     onError?: (reason: unknown) => void;
     /** Eindeutige Kennung des Eingabefelds (der Code-Bereich zeigt mehrere Leisten). */
     inputId: string;
+    /** Einträge des „/“-Menüs (hier nur Skills); ohne Angabe bleibt das Menü zu. */
+    slashItems?: SlashItem[];
+    onSlash?: (item: SlashItem) => void;
   }
 
-  let { value = $bindable(""), busy, locked = false, placeholder, settings, onSettingsChanged, onOpenSettings, onSend, onStop, onError, inputId }: Props = $props();
+  let { value = $bindable(""), busy, locked = false, placeholder, settings, onSettingsChanged, onOpenSettings, onSend, onStop, onError, inputId, slashItems = [], onSlash }: Props = $props();
 
   onMount(async () => {
     try {
@@ -47,6 +50,8 @@
 <PromptBar
   variant="code"
   {inputId}
+  {slashItems}
+  {onSlash}
   bind:value
   {placeholder}
   {busy}
